@@ -4,6 +4,23 @@ import { encodedRedirect } from "@/utils/utils";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { CloudCog } from "lucide-react";
+
+export const AnonUserAction = async (formData: FormData) => {
+  const supabase = createClient();
+  const origin = headers().get("origin");
+  const { data, error } = await supabase.auth.signInAnonymously()
+  const name = formData.get("name")?.toString();
+  const email = formData.get("email")?.toString();
+
+  if (!email || !name) {
+    return { error: "Name & Email are required" };
+  }
+
+  const updateReponse = await supabase.auth.updateUser({ data: { name }, email })
+  console.log({ data })
+
+}
 
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
