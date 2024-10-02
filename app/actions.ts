@@ -4,22 +4,33 @@ import { encodedRedirect } from "@/utils/utils";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { CloudCog } from "lucide-react";
 
 export const AnonUserAction = async (formData: FormData) => {
   const supabase = createClient();
-  const origin = headers().get("origin");
-  const { data, error } = await supabase.auth.signInAnonymously()
   const name = formData.get("name")?.toString();
   const email = formData.get("email")?.toString();
+  const captchaToken = formData.get("g-recaptcha-response")?.toString();
 
   if (!email || !name) {
     return { error: "Name & Email are required" };
   }
 
-  const updateReponse = await supabase.auth.updateUser({ data: { name }, email })
-  console.log({ data })
+  const { data, error } = await supabase.auth.signInAnonymously({
+    options: {
+      captchaToken,
+      data: {
+        name
+      },
+    }
+  })
 
+  console.log(error)
+
+  if (error) {
+    return "Error Authenticating!"
+  }
+
+  return redirect("/protected")
 }
 
 export const signUpAction = async (formData: FormData) => {

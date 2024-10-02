@@ -1,3 +1,5 @@
+"use client"
+
 import { AnonUserAction } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
@@ -5,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { SmtpMessage } from "../smtp-message";
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 
 export default function Signup({ searchParams }: { searchParams: Message }) {
     if ("message" in searchParams) {
@@ -14,7 +17,6 @@ export default function Signup({ searchParams }: { searchParams: Message }) {
             </div>
         );
     }
-
     return (
         <>
             <form className="flex flex-col min-w-64 max-w-64 mx-auto">
@@ -30,6 +32,9 @@ export default function Signup({ searchParams }: { searchParams: Message }) {
                     <Input name="name" type="name" placeholder="Rorry Blender" required />
                     <Label htmlFor="email">Email</Label>
                     <Input name="email" placeholder="you@example.com" required />
+                    <HCaptcha
+                        sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY || ""}
+                    />
                     <SubmitButton formAction={AnonUserAction} pendingText="Signing up...">
                         Continue
                     </SubmitButton>

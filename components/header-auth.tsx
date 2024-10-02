@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
+import { Avatar } from "flowbite-react";
 
 export default async function AuthButton() {
   const {
@@ -46,9 +47,15 @@ export default async function AuthButton() {
       </>
     );
   }
+  console.log(user?.user_metadata.picture)
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
+      <Avatar rounded img={user.user_metadata.picture} />
+      {
+        user.is_anonymous
+          ? `Welcome ${user.user_metadata?.name}`
+          : `Hey, ${user.user_metadata?.name || user.email}!`
+      }
       <form action={signOutAction}>
         <Button type="submit" variant={"outline"}>
           Sign out

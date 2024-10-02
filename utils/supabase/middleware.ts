@@ -45,7 +45,13 @@ export const updateSession = async (request: NextRequest) => {
     }
 
     if (request.nextUrl.pathname === "/" && !user.error) {
-      return NextResponse.redirect(new URL("/protected", request.url));
+      return user.data.user.is_anonymous
+        ? NextResponse.redirect(new URL("/protected", request.url))
+        : NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    if (request.nextUrl.pathname === "/dashboard" && user.data.user?.is_anonymous) {
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     return response;
