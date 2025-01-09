@@ -47,7 +47,6 @@ export default async function AuthButton() {
       </>
     );
   }
-  console.log(user?.user_metadata.picture)
   return user ? (
     <div className="flex items-center gap-4">
       <Avatar rounded img={user.user_metadata.picture} />

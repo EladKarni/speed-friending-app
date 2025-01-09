@@ -5,33 +5,25 @@ import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export const AnonUserAction = async (formData: FormData) => {
-  const supabase = createClient();
+export const AnonSignInAction = async (formData: FormData) => {
   const name = formData.get("name")?.toString();
-  const email = formData.get("email")?.toString();
-  const captchaToken = formData.get("g-recaptcha-response")?.toString();
-
-  if (!email || !name) {
-    return { error: "Name & Email are required" };
-  }
-
+  const supabase = createClient();
   const { data, error } = await supabase.auth.signInAnonymously({
     options: {
-      captchaToken,
       data: {
-        name
+        name: name,
       },
-    }
-  })
+    },
+  });
 
-  console.log(error)
+  console.log(data.user?.user_metadata);
 
   if (error) {
-    return "Error Authenticating!"
+    return "Error Authenticating!";
   }
 
-  return redirect("/protected")
-}
+  return redirect("/protected");
+};
 
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();

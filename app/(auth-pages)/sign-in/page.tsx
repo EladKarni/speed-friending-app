@@ -1,13 +1,10 @@
-import { signInAction } from "@/app/actions";
+import { AnonSignInAction, signInAction } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import GoogleLoginButton from "@/components/googleloginbutton";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/utils/supabase/server";
-import { Button } from "flowbite-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 export default function Login({ searchParams }: { searchParams: Message }) {
   return (
@@ -39,6 +36,9 @@ export default function Login({ searchParams }: { searchParams: Message }) {
         />
         <SubmitButton pendingText="Signing In..." formAction={signInAction}>
           Sign in
+        </SubmitButton>
+        <SubmitButton pendingText="Signing In..." formAction={AnonSignInAction}>
+          Anon Sign in
         </SubmitButton>
         <GoogleLoginButton />
         <FormMessage message={searchParams} />
