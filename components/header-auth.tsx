@@ -9,7 +9,7 @@ import { Avatar } from "flowbite-react";
 export default async function AuthButton() {
   const {
     data: { user },
-  } = await createClient().auth.getUser();
+  } = await(await createClient()).auth.getUser();
 
   if (!hasEnvVars) {
     return (

@@ -4,7 +4,7 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 
 const Dashboard = async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

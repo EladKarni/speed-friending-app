@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { Card } from "flowbite-react";
 
 export default async function Index() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

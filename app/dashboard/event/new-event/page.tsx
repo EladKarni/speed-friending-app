@@ -1,6 +1,8 @@
 "use client";
+
 import FormTextInput from "@/components/ui/formTextInput";
 import IntStepperGroup from "@/components/ui/IntStepperGroup";
+import { createClient } from "@/utils/supabase/client";
 import {
   Button,
   Dropdown,
@@ -13,15 +15,15 @@ import React, { useState } from "react";
 
 const NewEvent = () => {
   const [newEventObject, setNewEventObject] = useState({
-    title: "",
+    title: "New Event",
     tables: 0,
-    eventType: "",
+    type: "",
     timers: {
       search: 0,
       chat: 0,
-      match: 0,
+      wrapup: 0,
     },
-    mapFile: null,
+    mapFile: null as File | null,
   });
 
   const setTimers = (timerType: string, newValue: number) => {
@@ -36,14 +38,60 @@ const NewEvent = () => {
       },
     });
   };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      if (files[0] !== null) {
+        setNewEventObject({
+          ...newEventObject,
+          mapFile: files[0],
+        });
+      }
+    }
+  };
+
+  const handleSubmit = async () => {
+    console.log(newEventObject);
+    const supabase = createClient();
+    const mapFile = newEventObject.mapFile;
+    if (!mapFile) {
+      return;
+    }
+    const uploadData = await supabase.storage
+      .from("event-maps")
+      .upload(`public/event_${newEventObject.title}_map_file_.png`, mapFile, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (uploadData.error) {
+      console.error("upload file: ", uploadData.error);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("events")
+      .insert([
+        {
+          event_name: newEventObject.title,
+          tables: newEventObject.tables,
+          event_type: newEventObject.type,
+          timer_search: newEventObject.timers["search"],
+          timer_chat: newEventObject.timers["chat"],
+          timer_wrapup: newEventObject.timers["wrapup"],
+          event_map: uploadData.data.fullPath,
+        },
+      ])
+      .select();
+    console.log({ data }, { error });
+  };
+
   return (
     <section>
       <h1 className="text-center mb-4">New Event</h1>
       <HR />
-      <form
-        action={(data) => console.log(data)}
-        className="flex flex-col gap-6 mt-4"
-      >
+      <form action={handleSubmit} className="flex flex-col gap-6 mt-4">
         <FormTextInput
           lable={"Title"}
           type={"text"}
@@ -82,7 +130,7 @@ const NewEvent = () => {
                 onClick={() =>
                   setNewEventObject({
                     ...newEventObject,
-                    eventType: "Friend",
+                    type: "Friend",
                   })
                 }
               >
@@ -92,7 +140,7 @@ const NewEvent = () => {
                 onClick={() =>
                   setNewEventObject({
                     ...newEventObject,
-                    eventType: "Dating",
+                    type: "Dating",
                   })
                 }
               >
@@ -102,7 +150,7 @@ const NewEvent = () => {
                 onClick={() =>
                   setNewEventObject({
                     ...newEventObject,
-                    eventType: "Other",
+                    type: "Other",
                   })
                 }
               >
@@ -110,7 +158,7 @@ const NewEvent = () => {
               </DropdownItem>
             </Dropdown>
             <label className="text-gray-500 text-sm">
-              {`Selected Option: ${newEventObject.eventType ? newEventObject.eventType : "None"}`}
+              {`Selected Option: ${newEventObject.type ? newEventObject.type : "None"}`}
             </label>
           </div>
         </div>
@@ -125,6 +173,8 @@ const NewEvent = () => {
           <IntStepperGroup
             text="Match Search Timer"
             value={newEventObject.timers.search}
+            increment={30}
+            suffix="sec"
             setValueFunc={(newValue) => {
               console.log(newValue);
               setTimers("search", (newEventObject.timers.search = newValue));
@@ -133,17 +183,21 @@ const NewEvent = () => {
           <IntStepperGroup
             text="Match Chat Timer"
             value={newEventObject.timers.chat}
+            increment={1}
+            suffix="min"
             setValueFunc={(newValue) => {
               console.log(newValue);
               setTimers("chat", (newEventObject.timers.chat = newValue));
             }}
           />
           <IntStepperGroup
-            text="Match Post Timer"
-            value={newEventObject.timers.match}
+            text="Match Wrapup Timer"
+            value={newEventObject.timers.wrapup}
+            increment={30}
+            suffix="sec"
             setValueFunc={(newValue) => {
               console.log(newValue);
-              setTimers("match", (newEventObject.timers.match = newValue));
+              setTimers("wrapup", (newEventObject.timers.wrapup = newValue));
             }}
           />
           <div>
@@ -181,24 +235,28 @@ const NewEvent = () => {
                     PNG, JPG
                   </p>
                 </div>
-                <FileInput id="dropzone-file" className="hidden" />
+                <FileInput
+                  id="dropzone-file"
+                  className="hidden"
+                  onChange={handleFileSelected}
+                />
               </Label>
             </div>
           </div>
         </div>
+        <div className="flex justify-between">
+          <Button
+            onClick={() => console.log(newEventObject)}
+            className="mt-4"
+            color="gray"
+          >
+            Cancel
+          </Button>
+          <Button type="submit" className="mt-4">
+            Create Event
+          </Button>
+        </div>
       </form>
-      <div className="flex justify-between">
-        <Button
-          onClick={() => console.log(newEventObject)}
-          className="mt-4"
-          color="gray"
-        >
-          Cancel
-        </Button>
-        <Button onClick={() => console.log(newEventObject)} className="mt-4">
-          Create Event
-        </Button>
-      </div>
     </section>
   );
 };
