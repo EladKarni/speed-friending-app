@@ -43,12 +43,15 @@ export const updateSession = async (request: NextRequest) => {
     const user = await supabase.auth.getUser();
 
     // protected routes
-    if (request.nextUrl.searchParams.has("event_id") && user.error) {
+    if (request.nextUrl.searchParams.has("event_id") && user.error && request.nextUrl.pathname !== "/anon-login") {
       const event_id = request.nextUrl.searchParams.get("event_id");
+      const eventURL = new URL('/anon-login', request.url)
       if (event_id) {
-        cookieStore.set("event_id", event_id);
+        eventURL.searchParams.set('event_id', event_id)
       }
-      return NextResponse.redirect(new URL(`/anon-login`, request.url));
+      // And redirect to the new URL
+      return NextResponse.redirect(eventURL)
+
     }
 
     if (request.nextUrl.pathname === "/" && !user.error) {

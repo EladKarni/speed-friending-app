@@ -6,21 +6,29 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const AnonSignInAction = async (formData: FormData) => {
+  console.log(formData);
   const name = formData.get("name")?.toString();
+  const email = formData.get("email")?.toString();
+  const gender = formData.get("gender")?.toString();
+  const event_id = formData.get("event")?.toString();
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInAnonymously({
     options: {
       data: {
         name: name,
+        email: email,
+        gender: gender,
+        event_id: event_id,
       },
     },
   });
 
-  console.log(data.user?.user_metadata);
-
   if (error) {
     return "Error Authenticating!";
   }
+
+  console.log(data.user?.user_metadata);
 
   return redirect("/protected");
 };

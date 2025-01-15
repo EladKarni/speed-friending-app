@@ -18,6 +18,7 @@ export default async function ProtectedPage() {
   }
 
   if (user.is_anonymous) {
+    console.log(user);
     return (
       <section className="flex flex-col justify-between flex-1">
         <div>
