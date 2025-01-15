@@ -11,10 +11,40 @@ import {
 } from "flowbite-react";
 import { HiShare, HiChevronDown } from "react-icons/hi";
 
-import React from "react";
+import React, { use, useEffect, useState } from "react";
 import TableEntry from "@/components/ui/tableEntry";
+import { useSearchParams } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import Link from "next/link";
 
 const GuestList = () => {
+  const supabase = createClient();
+  const searchParams = useSearchParams();
+  const event_id = searchParams.get("event_id");
+
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchEventInfo = async () => {
+      if (!event_id) {
+        return;
+      }
+      const { data: events, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", event_id);
+
+      if (error) {
+        console.error(error);
+      }
+
+      if (events && events.length > 0) {
+        console.log(events[0]);
+      }
+    };
+    fetchEventInfo();
+  }, [event_id]);
+
   return (
     <Card>
       <form className="w-full mx-auto flex flex-col gap-4">
@@ -45,7 +75,12 @@ const GuestList = () => {
           />
         </div>
       </form>
-      <Button variant="primary">Show QR</Button>
+      <Link
+        href={`/dashboard/event/share?event_id=${event_id}`}
+        className="text-white text-center w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      >
+        Show QR
+      </Link>
       <div className="flex gap-4">
         <Dropdown
           label=""
@@ -75,12 +110,18 @@ const GuestList = () => {
             </TableHeadCell>
           </TableHead>
           <TableBody className="divide-y">
-            <TableEntry name="John Doe" visit={1} isAnon={false} />
-            <TableEntry name="Jane Doe" visit={2} isAnon={true} />
-            <TableEntry name="John Smith" visit={3} isAnon={false} />
-            <TableEntry name="Jane Smith" visit={4} isAnon={true} />
-            <TableEntry name="John Johnson" visit={5} isAnon={false} />
-            <TableEntry name="Jane Johnson" visit={6} isAnon={true} />
+            {users.length > 0 ? (
+              users.map((user) => (
+                // <TableEntry key={user.id} user={user} />
+                <TableEntry name="John Doe" visit={1} isAnon={false} />
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="text-center p-4">
+                  This event has no users
+                </td>
+              </tr>
+            )}
           </TableBody>
         </Table>
       </div>

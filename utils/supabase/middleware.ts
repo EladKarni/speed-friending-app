@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const updateSession = async (request: NextRequest) => {
+  const cookieStore = await cookies();
+
   // This `try/catch` block is only here for the interactive tutorial.
   // Feel free to remove once you have Supabase connected.
   try {
@@ -22,17 +25,17 @@ export const updateSession = async (request: NextRequest) => {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value),
+              request.cookies.set(name, value)
             );
             response = NextResponse.next({
               request,
             });
             cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options),
+              response.cookies.set(name, value, options)
             );
           },
         },
-      },
+      }
     );
 
     // This will refresh session if expired - required for Server Components
@@ -40,8 +43,12 @@ export const updateSession = async (request: NextRequest) => {
     const user = await supabase.auth.getUser();
 
     // protected routes
-    if (request.nextUrl.pathname.startsWith("/protected") && user.error) {
-      return NextResponse.redirect(new URL("/anon-login", request.url));
+    if (request.nextUrl.searchParams.has("event_id") && user.error) {
+      const event_id = request.nextUrl.searchParams.get("event_id");
+      if (event_id) {
+        cookieStore.set("event_id", event_id);
+      }
+      return NextResponse.redirect(new URL(`/anon-login`, request.url));
     }
 
     if (request.nextUrl.pathname === "/" && !user.error) {
@@ -50,7 +57,10 @@ export const updateSession = async (request: NextRequest) => {
         : NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    if (request.nextUrl.pathname === "/dashboard" && user.data.user?.is_anonymous) {
+    if (
+      request.nextUrl.pathname === "/dashboard" &&
+      user.data.user?.is_anonymous
+    ) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 

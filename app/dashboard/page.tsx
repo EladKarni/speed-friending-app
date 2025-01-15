@@ -26,7 +26,7 @@ const Dashboard = async () => {
         </span>
       </div>
       <Link
-        href="/protected/new-event"
+        href="/dashboard/event/new-event"
         className="w-fit rounded-full absolute bottom-0 right-0 m-4 bg-slate-700 p-4 hover:bg-transparent cursor-pointer"
       >
         <PlusIcon className="pointer-events-none hover:text-slate-900" />

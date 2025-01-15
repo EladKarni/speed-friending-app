@@ -11,9 +11,12 @@ import {
   HR,
   Label,
 } from "flowbite-react";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 const NewEvent = () => {
+  const router = useRouter();
+
   const [newEventObject, setNewEventObject] = useState({
     title: "New Event",
     tables: 0,
@@ -52,7 +55,6 @@ const NewEvent = () => {
   };
 
   const handleSubmit = async () => {
-    console.log(newEventObject);
     const supabase = createClient();
     const mapFile = newEventObject.mapFile;
     if (!mapFile) {
@@ -84,7 +86,12 @@ const NewEvent = () => {
         },
       ])
       .select();
-    console.log({ data }, { error });
+
+    if (error) {
+      console.error("insert event: ", error);
+      return;
+    }
+    router.push("/dashboard/event?event_id=" + data[0].id);
   };
 
   return (
@@ -176,7 +183,6 @@ const NewEvent = () => {
             increment={30}
             suffix="sec"
             setValueFunc={(newValue) => {
-              console.log(newValue);
               setTimers("search", (newEventObject.timers.search = newValue));
             }}
           />
@@ -186,7 +192,6 @@ const NewEvent = () => {
             increment={1}
             suffix="min"
             setValueFunc={(newValue) => {
-              console.log(newValue);
               setTimers("chat", (newEventObject.timers.chat = newValue));
             }}
           />
@@ -196,7 +201,6 @@ const NewEvent = () => {
             increment={30}
             suffix="sec"
             setValueFunc={(newValue) => {
-              console.log(newValue);
               setTimers("wrapup", (newEventObject.timers.wrapup = newValue));
             }}
           />
