@@ -50,9 +50,9 @@ const UserEntryPoint = () => {
             <Input type="text" name="email" placeholder="Your Email" required />
             <div className="max-w-md">
               <div className="mb-2 block">
-                <Label htmlFor="gender" value="Select your ticket" />
+                <Label htmlFor="ticket_type" value="Select your ticket" />
               </div>
-              <Select name="gender" id="gender" required>
+              <Select name="ticket_type" id="ticket_type" required>
                 <option value="Women">Women’s Ticket</option>
                 <option value="Men">Men's Ticket</option>
               </Select>

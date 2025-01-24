@@ -1,5 +1,4 @@
 export type EventType = {
-  attendees: string[];
   created_at: string;
   event_map: string | null;
   event_name: string;
@@ -53,26 +52,26 @@ export type Database = {
         Row: {
           date_of_birth: string | null;
           email: string | null;
-          gender_identity: string | null;
           id: string;
           joined_on: string;
           name: string;
+          ticket_type: string | null;
         };
         Insert: {
           date_of_birth?: string | null;
           email?: string | null;
-          gender_identity?: string | null;
           id?: string;
           joined_on?: string;
           name: string;
+          ticket_type?: string | null;
         };
         Update: {
           date_of_birth?: string | null;
           email?: string | null;
-          gender_identity?: string | null;
           id?: string;
           joined_on?: string;
           name?: string;
+          ticket_type?: string | null;
         };
         Relationships: [];
       };
@@ -109,9 +108,47 @@ export type Database = {
           },
         ];
       };
+      event_stages: {
+        Row: {
+          attendee_id: string;
+          created_at: string;
+          current_round: number;
+          end_timer: string;
+          event_id: string;
+        };
+        Insert: {
+          attendee_id: string;
+          created_at: string;
+          current_round: number;
+          end_timer: string;
+          event_id: string;
+        };
+        Update: {
+          attendee_id?: string;
+          created_at?: string;
+          current_round?: number;
+          end_timer?: string;
+          event_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_stages_attendee_id_fkey";
+            columns: ["attendee_id"];
+            isOneToOne: false;
+            referencedRelation: "attendees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_stages_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       events: {
         Row: {
-          attendees: string[];
           created_at: string;
           event_map: string | null;
           event_name: string;
@@ -122,10 +159,10 @@ export type Database = {
           tables: number;
           timer_chat: number;
           timer_search: number;
+          timer_start: number | null;
           timer_wrapup: number;
         };
         Insert: {
-          attendees?: string[];
           created_at?: string;
           event_map?: string | null;
           event_name: string;
@@ -136,10 +173,10 @@ export type Database = {
           tables?: number;
           timer_chat: number;
           timer_search: number;
+          timer_start?: number | null;
           timer_wrapup: number;
         };
         Update: {
-          attendees?: string[];
           created_at?: string;
           event_map?: string | null;
           event_name?: string;
@@ -150,6 +187,7 @@ export type Database = {
           tables?: number;
           timer_chat?: number;
           timer_search?: number;
+          timer_start?: number | null;
           timer_wrapup?: number;
         };
         Relationships: [];

@@ -36,7 +36,7 @@ const GuestList = () => {
       .select("*")
       .eq("id", payload.new.attendee_id)
       .single();
-    if (!attendee || attendee.gender_identity === null) {
+    if (!attendee || attendee.ticket_type === null) {
       return;
     }
     setEventAttendees((prev) => [
@@ -44,7 +44,7 @@ const GuestList = () => {
       {
         id: attendee.id,
         name: attendee.name,
-        ticketAs: attendee.gender_identity || "Other",
+        ticketAs: attendee.ticket_type || "Other",
       },
     ]);
   };
@@ -66,14 +66,15 @@ const GuestList = () => {
       const { data: events, error } = await supabase
         .from("events")
         .select("*")
-        .eq("id", event_id);
+        .eq("id", event_id)
+        .single();
 
       const { data: attendees, error: attendeeError } = await supabase
         .from("event_attendees")
         .select(
           `
           attendee_id,
-          attendees ( date_of_birth, email, gender_identity, id, joined_on, name )
+          attendees ( date_of_birth, email, ticket_type, id, joined_on, name )
         `
         )
         .eq("event_id", event_id);
@@ -84,7 +85,7 @@ const GuestList = () => {
             return {
               id: attendee.attendee_id,
               name: attendee.attendees.name,
-              ticketAs: attendee.attendees.gender_identity || "Other",
+              ticketAs: attendee.attendees.ticket_type || "Other",
             };
           })
         );
@@ -94,8 +95,8 @@ const GuestList = () => {
         console.error(error);
       }
 
-      if (events && events.length > 0) {
-        setEvent(events[0]);
+      if (events) {
+        setEvent(events);
       }
     };
     fetchEventInfo();

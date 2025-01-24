@@ -11,7 +11,7 @@ export const AnonSignInAction = async (formData: FormData) => {
   console.log(formData);
   const name = formData.get("name")?.toString();
   const email = formData.get("email")?.toString();
-  const gender = formData.get("gender")?.toString();
+  const ticket_type = formData.get("ticket_type")?.toString();
   const event_id = formData.get("event")?.toString();
 
   const supabase = await createClient();
@@ -20,7 +20,7 @@ export const AnonSignInAction = async (formData: FormData) => {
       data: {
         name: name,
         email: email,
-        gender: gender,
+        ticket_type: ticket_type,
         event_id: event_id,
       },
     },
@@ -31,13 +31,13 @@ export const AnonSignInAction = async (formData: FormData) => {
   }
 
   const user = data?.user;
-
+  console.log({ user });
   if (user) {
     const { error: inset_attendee_error } = await supabase
       .from("attendees")
       .insert({
-        email: user.email,
-        gender_identity: user.user_metadata.gender,
+        email: user.user_metadata.email,
+        ticket_type: user.user_metadata.ticket_type,
         name: user.user_metadata.name,
       });
     if (inset_attendee_error) {
