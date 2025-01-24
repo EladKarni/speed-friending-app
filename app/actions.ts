@@ -4,6 +4,8 @@ import { encodedRedirect } from "@/utils/utils";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import getEvent from "@/utils/supabase/getEvent";
+import { use } from "react";
 
 export const AnonSignInAction = async (formData: FormData) => {
   console.log(formData);
@@ -28,9 +30,40 @@ export const AnonSignInAction = async (formData: FormData) => {
     return "Error Authenticating!";
   }
 
-  console.log(data.user?.user_metadata);
+  const user = data?.user;
 
-  return redirect("/protected");
+  if (user) {
+    const { error: inset_attendee_error } = await supabase
+      .from("attendees")
+      .insert({
+        email: user.email,
+        gender_identity: user.user_metadata.gender,
+        name: user.user_metadata.name,
+      });
+    if (inset_attendee_error) {
+      console.log("Error inserting attendee!", inset_attendee_error);
+      return "Error inserting attendee!";
+    }
+  }
+
+  if (event_id) {
+    const event = await getEvent(event_id);
+    if (!event) {
+      return "Event not found!";
+    }
+    if (!data.user?.id) {
+      return "User not found!";
+    }
+    const result = await supabase
+      .from("event_attendees")
+      .insert({ event_id, attendee_id: data.user.id });
+
+    if (result.error) {
+      return "Error registering!";
+    }
+  }
+
+  return redirect("/protected/waiting-room");
 };
 
 export const signUpAction = async (formData: FormData) => {

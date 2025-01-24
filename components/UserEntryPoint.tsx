@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import React from "react";
+import { EventType } from "@/utils/supabase/schema";
 
 interface EventData {
   event_type: "Friending" | "Dating" | "Other";
@@ -18,7 +19,7 @@ const UserEntryPoint = () => {
   const searchParams = useSearchParams();
   const event_id = searchParams.get("event_id");
 
-  const [eventData, setEventData] = useState<EventData | null>(null);
+  const [eventData, setEventData] = useState<EventType>();
 
   useEffect(() => {
     const fetchEvent = async () => {

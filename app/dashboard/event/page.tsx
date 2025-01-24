@@ -11,18 +11,52 @@ import {
 } from "flowbite-react";
 import { HiShare, HiChevronDown } from "react-icons/hi";
 
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import TableEntry from "@/components/ui/tableEntry";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
+import { EventType } from "@/utils/supabase/schema";
 
 const GuestList = () => {
   const supabase = createClient();
   const searchParams = useSearchParams();
   const event_id = searchParams.get("event_id");
+  const [event, setEvent] = useState<EventType>();
+  const [event_attendees, setEventAttendees] = useState<
+    { id: string; name: string; ticketAs: string }[]
+  >([]);
 
-  const [users, setUsers] = useState([]);
+  const handleAttendeesUpdated = async (payload: any) => {
+    if (!payload || !payload.new) {
+      return;
+    }
+    const { data: attendee, error } = await supabase
+      .from("attendees")
+      .select("*")
+      .eq("id", payload.new.attendee_id)
+      .single();
+    if (!attendee || attendee.gender_identity === null) {
+      return;
+    }
+    setEventAttendees((prev) => [
+      ...prev,
+      {
+        id: attendee.id,
+        name: attendee.name,
+        ticketAs: attendee.gender_identity || "Other",
+      },
+    ]);
+  };
+
+  supabase
+    .channel("table_db_changes")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "event_attendees" },
+      handleAttendeesUpdated
+    )
+    .subscribe();
 
   useEffect(() => {
     const fetchEventInfo = async () => {
@@ -34,12 +68,34 @@ const GuestList = () => {
         .select("*")
         .eq("id", event_id);
 
+      const { data: attendees, error: attendeeError } = await supabase
+        .from("event_attendees")
+        .select(
+          `
+          attendee_id,
+          attendees ( date_of_birth, email, gender_identity, id, joined_on, name )
+        `
+        )
+        .eq("event_id", event_id);
+
+      if (attendees && attendees.length > 0) {
+        setEventAttendees(
+          attendees.map((attendee) => {
+            return {
+              id: attendee.attendee_id,
+              name: attendee.attendees.name,
+              ticketAs: attendee.attendees.gender_identity || "Other",
+            };
+          })
+        );
+      }
+
       if (error) {
         console.error(error);
       }
 
       if (events && events.length > 0) {
-        console.log(events[0]);
+        setEvent(events[0]);
       }
     };
     fetchEventInfo();
@@ -99,21 +155,22 @@ const GuestList = () => {
           <HiShare />
         </Button>
       </div>
+      <h2>Welcome to {event?.event_name}</h2>
+
       <div className="overflow-x-auto">
         <Table>
           <TableHead>
             <TableHeadCell>Name</TableHeadCell>
             <TableHeadCell>Visit</TableHeadCell>
-            <TableHeadCell>Anon</TableHeadCell>
+            <TableHeadCell>Ticket</TableHeadCell>
             <TableHeadCell>
               <span className="sr-only">Edit</span>
             </TableHeadCell>
           </TableHead>
           <TableBody className="divide-y">
-            {users.length > 0 ? (
-              users.map((user) => (
-                // <TableEntry key={user.id} user={user} />
-                <TableEntry name="John Doe" visit={1} isAnon={false} />
+            {event_attendees && event_attendees.length > 0 ? (
+              event_attendees.map(({ name, id, ticketAs }) => (
+                <TableEntry name={name} visit={1} ticket={ticketAs} key={id} />
               ))
             ) : (
               <tr>
@@ -125,6 +182,7 @@ const GuestList = () => {
           </TableBody>
         </Table>
       </div>
+      <Button className="w-full">Start Event</Button>
     </Card>
   );
 };

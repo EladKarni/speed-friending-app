@@ -5,17 +5,17 @@ import { FaGear } from "react-icons/fa6";
 type TableEntryProps = {
   name: string;
   visit: number;
-  isAnon: boolean;
+  ticket: string;
 };
 
-const TableEntry = ({ name, visit, isAnon }: TableEntryProps) => {
+const TableEntry = ({ name, visit, ticket }: TableEntryProps) => {
   return (
     <TableRow className="bg-white dark:border-gray-700 dark:bg-gray-800">
       <TableCell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
         {name}
       </TableCell>
       <TableCell>{visit}st</TableCell>
-      <TableCell>{isAnon ? "Yes" : "No"}</TableCell>
+      <TableCell>{ticket}</TableCell>
       <TableCell>
         <Button variant="ghost" className="flex justify-end w-full">
           <FaGear />
