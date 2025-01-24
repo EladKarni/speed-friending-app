@@ -15,7 +15,6 @@ const WaitingRoom = async () => {
     .eq("id", user.user_metadata.event_id)
     .single();
 
-  console.log(event);
   return (
     <div className="w-full flex flex-col gap-8">
       <Card className=" text-center">
@@ -25,8 +24,18 @@ const WaitingRoom = async () => {
           Nerdy Patreon
         </span>
       </Card>
-      <div className="mx-8 text-center text-gray-400 text-lg">
-        <h2>You are waiting for {event?.event_name} to start</h2>
+      <div className="mx-8 text-center">
+        <h2 className="text-2xl">
+          Waiting for <span className="text-blue-300">{event?.event_name}</span>{" "}
+          to start
+        </h2>
+        <h3 className="text-lg text-slate-400">
+          While you wait for the event to start, here is the event map
+        </h3>
+        <img
+          src={`https://ysowurspnajoufhabtjt.supabase.co/storage/v1/object/public/${event?.event_map}`}
+          alt="map of current event"
+        />
       </div>
     </div>
   );
