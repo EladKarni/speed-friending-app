@@ -26,6 +26,11 @@ const GuestList = () => {
   const [event_attendees, setEventAttendees] = useState<
     { id: string; name: string; ticketAs: string }[]
   >([]);
+  const [readyAttendees, setReadyAttendees] = useState<string[]>([]);
+  const [eventStatus, setEventStatus] = useState<"Active" | "Inactive">(
+    "Inactive"
+  );
+  const [currentRound, setCurrentRound] = useState<number>(0);
 
   const handleAttendeesUpdated = async (payload: any) => {
     if (!payload || !payload.new) {
@@ -69,6 +74,34 @@ const GuestList = () => {
         .eq("id", event_id)
         .single();
 
+      if (events) {
+        setCurrentRound(events.current_round);
+      }
+
+      const { data: isEventActive, error: isEventActiveError } = await supabase
+        .from("event_rounds")
+        .select("*")
+        .eq("event_id", event_id)
+        .single();
+
+      if (isEventActive) {
+        setEventStatus("Active");
+      }
+      console.log(isEventActive, isEventActiveError);
+
+      const { data: readyAttendees, error: readyAttendeesError } =
+        await supabase
+          .from("round_participation")
+          .select("*")
+          .eq("event_id", event_id)
+          .eq("is_ready", true);
+
+      if (readyAttendees) {
+        setReadyAttendees(
+          readyAttendees.map((attendee) => attendee.attendee_id)
+        );
+      }
+
       const { data: attendees, error: attendeeError } = await supabase
         .from("event_attendees")
         .select(
@@ -100,7 +133,26 @@ const GuestList = () => {
       }
     };
     fetchEventInfo();
-  }, [event_id]);
+  }, []);
+
+  supabase
+    .channel("user_status_updates")
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "round_participation" },
+      (payload) => {
+        if (!payload || !payload.new) {
+          return;
+        } else if (payload.new.is_ready) {
+          setReadyAttendees((prev) => [...prev, payload.new.attendee_id]);
+        } else {
+          setReadyAttendees((prev) =>
+            prev.filter((id) => id !== payload.new.attendee_id)
+          );
+        }
+      }
+    )
+    .subscribe();
 
   return (
     <Card>
@@ -162,7 +214,7 @@ const GuestList = () => {
         <Table>
           <TableHead>
             <TableHeadCell>Name</TableHeadCell>
-            <TableHeadCell>Visit</TableHeadCell>
+            <TableHeadCell>Ready</TableHeadCell>
             <TableHeadCell>Ticket</TableHeadCell>
             <TableHeadCell>
               <span className="sr-only">Edit</span>
@@ -171,7 +223,12 @@ const GuestList = () => {
           <TableBody className="divide-y">
             {event_attendees && event_attendees.length > 0 ? (
               event_attendees.map(({ name, id, ticketAs }) => (
-                <TableEntry name={name} visit={1} ticket={ticketAs} key={id} />
+                <TableEntry
+                  name={name}
+                  ready={readyAttendees.includes(id)}
+                  ticket={ticketAs}
+                  key={id}
+                />
               ))
             ) : (
               <tr>
@@ -183,7 +240,49 @@ const GuestList = () => {
           </TableBody>
         </Table>
       </div>
-      <Button className="w-full">Start Event</Button>
+      <div>
+        Current round: {event?.current_round} <br />
+        Number of ready attendees: {readyAttendees.length}
+      </div>
+      <div>
+        <h2>Event is currently: {eventStatus}</h2>
+      </div>
+      <Button
+        disabled={eventStatus === "Active"}
+        className="w-full"
+        onClick={async () => {
+          if (event == undefined) {
+            return;
+          }
+          const { data, error } = await supabase.from("event_rounds").insert([
+            {
+              event_id: event_id ?? "",
+              current_round: event.current_round ?? 1,
+              round_timers: [45, 1, 5, 1],
+            },
+          ]);
+
+          if (error) {
+            console.error(error);
+          }
+
+          if (!error) {
+            await supabase
+              .from("events")
+              .update({ current_round: event.current_round + 1 })
+              .eq("id", event.id);
+            setEvent(
+              (prev) =>
+                prev && {
+                  ...prev,
+                  current_round: prev.current_round + 1,
+                }
+            );
+          }
+        }}
+      >
+        {eventStatus === "Inactive" ? "Start Event" : "Round In Progress"}
+      </Button>
     </Card>
   );
 };

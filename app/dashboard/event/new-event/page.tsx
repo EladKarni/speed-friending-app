@@ -1,5 +1,6 @@
 "use client";
 
+import ConfirmPrompt from "@/components/ui/confirmPrompt";
 import FormTextInput from "@/components/ui/formTextInput";
 import IntStepperGroup from "@/components/ui/IntStepperGroup";
 import { createClient } from "@/utils/supabase/client";
@@ -277,18 +278,14 @@ const NewEvent = () => {
             )}
           </div>
         </div>
-        <div className="flex justify-between">
-          <Button
-            onClick={() => console.log(newEventObject)}
-            className="mt-4"
-            color="gray"
-          >
-            Cancel
-          </Button>
-          <Button type="submit" className="mt-4">
-            Create Event
-          </Button>
-        </div>
+        <ConfirmPrompt
+          handleCancel={function (): void {
+            throw new Error("Function not implemented.");
+          }}
+          ConfirmBtnType={"submit"}
+          cancleText={"Cancel"}
+          confirmText={"Create Event"}
+        />
       </form>
     </section>
   );

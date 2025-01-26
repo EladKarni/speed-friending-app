@@ -5,10 +5,8 @@ import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import getEvent from "@/utils/supabase/getEvent";
-import { use } from "react";
 
 export const AnonSignInAction = async (formData: FormData) => {
-  console.log(formData);
   const name = formData.get("name")?.toString();
   const email = formData.get("email")?.toString();
   const ticket_type = formData.get("ticket_type")?.toString();
@@ -31,7 +29,7 @@ export const AnonSignInAction = async (formData: FormData) => {
   }
 
   const user = data?.user;
-  console.log({ user });
+
   if (user) {
     const { error: inset_attendee_error } = await supabase
       .from("attendees")
@@ -62,7 +60,7 @@ export const AnonSignInAction = async (formData: FormData) => {
       return "Error registering!";
     }
   }
-
+  createAttendeeReadyForNextRound();
   return redirect("/protected/waiting-room");
 };
 
@@ -188,4 +186,39 @@ export const signOutAction = async () => {
   const supabase = await createClient();
   await supabase.auth.signOut();
   return redirect("/sign-in");
+};
+
+export const modifyAttendeeReadyForNextRound = async (isReady: boolean) => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return;
+  }
+  const { data, error } = await supabase
+    .from("round_participation")
+    .update({
+      is_ready: isReady,
+    })
+    .eq("attendee_id", user.id);
+
+  if (error) {
+    console.log("Error updating round participation", error);
+  }
+};
+
+export const createAttendeeReadyForNextRound = async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return;
+  }
+  const { data, error } = await supabase.from("round_participation").insert({
+    attendee_id: user.id,
+    event_id: user.user_metadata.event_id,
+    is_ready: false,
+  });
 };

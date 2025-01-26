@@ -37,7 +37,10 @@ const Dashboard = async () => {
             <div className="flex flex-col gap-4">
               {sortedEvents?.map((event) => {
                 return (
-                  <Link href={`/dashboard/event?event_id=${event.id}`}>
+                  <Link
+                    href={`/dashboard/event?event_id=${event.id}`}
+                    key={event.id}
+                  >
                     <Card
                       key={event.id}
                       className="flex justify-between items-center"
