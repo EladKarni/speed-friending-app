@@ -13,10 +13,11 @@ import { HiShare, HiChevronDown } from "react-icons/hi";
 
 import React, { useEffect, useState } from "react";
 import TableEntry from "@/components/ui/tableEntry";
-import { useSearchParams } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { EventType } from "@/utils/supabase/schema";
+import { generateMatches } from "@/utils/utils";
 
 const GuestList = () => {
   const supabase = createClient();
@@ -24,13 +25,13 @@ const GuestList = () => {
   const event_id = searchParams.get("event_id");
   const [event, setEvent] = useState<EventType>();
   const [event_attendees, setEventAttendees] = useState<
-    { id: string; name: string; ticketAs: string }[]
+    { id: string; name: string; ticketAs: string | "Women" | "Men" }[]
   >([]);
   const [readyAttendees, setReadyAttendees] = useState<string[]>([]);
   const [eventStatus, setEventStatus] = useState<"Active" | "Inactive">(
     "Inactive"
   );
-  const [currentRound, setCurrentRound] = useState<number>(0);
+  const [currentRound, setCurrentRound] = useState<number | null>(1);
 
   const handleAttendeesUpdated = async (payload: any) => {
     if (!payload || !payload.new) {
@@ -54,6 +55,10 @@ const GuestList = () => {
     ]);
   };
 
+  if (!event_id) {
+    redirect("/dashboard");
+  }
+
   supabase
     .channel("table_db_changes")
     .on(
@@ -65,29 +70,35 @@ const GuestList = () => {
 
   useEffect(() => {
     const fetchEventInfo = async () => {
-      if (!event_id) {
-        return;
-      }
       const { data: events, error } = await supabase
         .from("events")
         .select("*")
         .eq("id", event_id)
         .single();
 
-      if (events) {
-        setCurrentRound(events.current_round);
-      }
-
-      const { data: isEventActive, error: isEventActiveError } = await supabase
+      const { data: eventRounds, error: eventRoundsError } = await supabase
         .from("event_rounds")
         .select("*")
         .eq("event_id", event_id)
-        .single();
+        .order("round_started_at", { ascending: false });
 
-      if (isEventActive) {
-        setEventStatus("Active");
+      if (eventRounds && eventRounds.length > 0) {
+        setCurrentRound(eventRounds.length);
+        const latestRound = eventRounds[0];
+        if (!eventRoundsError && latestRound && latestRound.round_started_at) {
+          const now = new Date();
+          const roundStartedAt = new Date(latestRound.round_started_at);
+          const roundEndedAt = new Date(
+            roundStartedAt.getTime() +
+              latestRound.round_timers.reduce((a, b) => a + b) * 1000
+          );
+          if (now >= roundStartedAt && now <= roundEndedAt) {
+            setEventStatus("Active");
+          } else {
+            setEventStatus("Inactive");
+          }
+        }
       }
-      console.log(isEventActive, isEventActiveError);
 
       const { data: readyAttendees, error: readyAttendeesError } =
         await supabase
@@ -118,7 +129,7 @@ const GuestList = () => {
             return {
               id: attendee.attendee_id,
               name: attendee.attendees.name,
-              ticketAs: attendee.attendees.ticket_type || "Other",
+              ticketAs: attendee.attendees.ticket_type || "Men",
             };
           })
         );
@@ -241,7 +252,7 @@ const GuestList = () => {
         </Table>
       </div>
       <div>
-        Current round: {event?.current_round} <br />
+        Current round: ??? <br />
         Number of ready attendees: {readyAttendees.length}
       </div>
       <div>
@@ -251,33 +262,38 @@ const GuestList = () => {
         disabled={eventStatus === "Active"}
         className="w-full"
         onClick={async () => {
-          if (event == undefined) {
-            return;
-          }
-          const { data, error } = await supabase.from("event_rounds").insert([
-            {
-              event_id: event_id ?? "",
-              current_round: event.current_round ?? 1,
-              round_timers: [45, 1, 5, 1],
-            },
-          ]);
+          const { data, error } = await supabase
+            .from("event_rounds")
+            .insert([
+              {
+                event_id: event_id ?? "",
+                round_timers: [45, 60, 300, 60],
+              },
+            ])
+            .select()
+            .single();
 
           if (error) {
             console.error(error);
+            return;
           }
 
-          if (!error) {
-            await supabase
-              .from("events")
-              .update({ current_round: event.current_round + 1 })
-              .eq("id", event.id);
-            setEvent(
-              (prev) =>
-                prev && {
-                  ...prev,
-                  current_round: prev.current_round + 1,
-                }
-            );
+          // create an array of only ready attendees
+          const readyAttendeesInfo = event_attendees.filter((attendee) =>
+            readyAttendees.includes(attendee.id)
+          );
+
+          const generatedMatches = generateMatches(
+            readyAttendeesInfo,
+            data.id,
+            event?.event_type || "Dating"
+          );
+
+          if (data) {
+            const { error } = await supabase
+              .from("event_round_matches")
+              .insert(generatedMatches);
+            console.log(error);
           }
         }}
       >

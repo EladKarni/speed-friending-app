@@ -5,7 +5,8 @@ import { createClient } from "@/utils/supabase/client";
 import { EventType } from "@/utils/supabase/schema";
 import { User } from "@supabase/supabase-js";
 import { Card, Avatar } from "flowbite-react";
-import { use, useEffect, useState } from "react";
+import { redirect } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const WaitingRoom = () => {
   const supabase = createClient();
@@ -53,6 +54,19 @@ const WaitingRoom = () => {
         }
         if (payload.new.attendee_id === attendee?.id) {
           setIsReady(payload.new.is_ready);
+        }
+      }
+    )
+    .subscribe();
+
+  supabase
+    .channel("new_round_started")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "event_round_matches" },
+      (payload) => {
+        if (payload.new.attendee_id === attendee?.id) {
+          redirect(`/test`);
         }
       }
     )
