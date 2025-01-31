@@ -93,25 +93,5 @@ export const generateMatches = (
     });
   }
   return matchInfoArray;
-
-  // return [
-  //   {
-  //     event_round_id: round_id,
-  //     attendee_id: "83486c34-96ae-4085-836f-e557b45c1a75", // Elad
-  //     location: "Table 1",
-  //     match_info: {
-  //       id: "862a",
-  //       name: "Micheal",
-  //     },
-  //   },
-  //   {
-  //     event_round_id: round_id,
-  //     attendee_id: "a1bdef26-b021-4c88-acbe-17ebd229862a", // Micheal
-  //     location: "Table 1",
-  //     match_info: {
-  //       id: "1a75",
-  //       name: "Elad",
-  //     },
-  //   },
-  // ];
 };
+

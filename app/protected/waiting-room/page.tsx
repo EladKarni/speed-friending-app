@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { EventType } from "@/utils/supabase/schema";
 import { User } from "@supabase/supabase-js";
 import { Card, Avatar } from "flowbite-react";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const WaitingRoom = () => {
@@ -13,7 +13,7 @@ const WaitingRoom = () => {
   const [isReady, setIsReady] = useState(false);
   const [event, setEvent] = useState<EventType>();
   const [attendee, setAttendee] = useState<User>();
-
+  const rounter = useRouter();
   useEffect(() => {
     const setup = async () => {
       const {
@@ -66,7 +66,7 @@ const WaitingRoom = () => {
       { event: "INSERT", schema: "public", table: "event_round_matches" },
       (payload) => {
         if (payload.new.attendee_id === attendee?.id) {
-          redirect(`/test`);
+          rounter.push(`/protected/attendee-match`);
         }
       }
     )

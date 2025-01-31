@@ -16,7 +16,7 @@ const FormTextInput = ({
   setNewValue,
 }: FormTextInputProps) => {
   return (
-    <div>
+    <div className="flex-1">
       <div className="mb-2 block">
         <Label htmlFor={id} value={lable} className="text-xl" />
       </div>

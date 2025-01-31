@@ -42,7 +42,7 @@ export const updateSession = async (request: NextRequest) => {
     // https://supabase.com/docs/guides/auth/server-side/nextjs
     const user = await supabase.auth.getUser();
     if (
-      request.nextUrl.pathname.includes("/dashboard/event") &&
+      request.nextUrl.pathname.includes("/dashboard") &&
       user?.data?.user?.is_anonymous
     ) {
       return NextResponse.redirect(

@@ -21,7 +21,8 @@ const NewEvent = () => {
 
   const [newEventObject, setNewEventObject] = useState({
     title: "New Event",
-    tables: 0,
+    table_count: 0,
+    table_capacity: 0,
     type: "",
     timers: {
       start: 0,
@@ -80,7 +81,8 @@ const NewEvent = () => {
       .insert([
         {
           event_name: newEventObject.title,
-          tables: newEventObject.tables,
+          table_count: newEventObject.table_count,
+          table_capacity: newEventObject.table_capacity,
           event_type: newEventObject.type,
           timer_start: newEventObject.timers["start"],
           timer_search: newEventObject.timers["search"],
@@ -115,18 +117,32 @@ const NewEvent = () => {
             })
           }
         />
-        <FormTextInput
-          lable={"Tables"}
-          type={"number"}
-          inputSize={"md"}
-          id={"title"}
-          setNewValue={(event) =>
-            setNewEventObject({
-              ...newEventObject,
-              tables: parseInt(event.target.value),
-            })
-          }
-        />
+        <div className="flex gap-4">
+          <FormTextInput
+            lable={"Number of Tables"}
+            type={"number"}
+            inputSize={"md"}
+            id={"table_count"}
+            setNewValue={(event) =>
+              setNewEventObject({
+                ...newEventObject,
+                table_count: parseInt(event.target.value),
+              })
+            }
+          />
+          <FormTextInput
+            lable={"Attendees Per Table"}
+            type={"number"}
+            inputSize={"md"}
+            id={"table_capacity"}
+            setNewValue={(event) =>
+              setNewEventObject({
+                ...newEventObject,
+                table_capacity: parseInt(event.target.value),
+              })
+            }
+          />
+        </div>
         <div>
           <div className="mb-2 block">
             <Label
