@@ -6,11 +6,13 @@ export type EventType = {
   id: string;
   organizer: string;
   start_time: string | null;
-  tables: number;
+  table_count: number;
+  table_capacity: number;
   timer_chat: number;
   timer_search: number;
   timer_start: number;
   timer_wrapup: number;
+  matches: Json | Record<string, string[]>;
 };
 
 export type Json =
@@ -19,6 +21,13 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
+  | { [key: string]: string[] }
+  | {
+      id: string;
+      name: string;
+      ticketAs: string;
+    }
+  | Record<string, string[]>
   | Json[];
 
 export type Database = {
@@ -161,24 +170,24 @@ export type Database = {
         Row: {
           event_id: string;
           id: string;
-          round_started_at: string | null;
+          round_started_at: string;
           round_timers: number[];
         };
         Insert: {
           event_id: string;
           id?: string;
-          round_started_at?: string | null;
+          round_started_at?: string;
           round_timers?: number[];
         };
         Update: {
           event_id?: string;
           id?: string;
-          round_started_at?: string | null;
+          round_started_at?: string;
           round_timers?: number[];
         };
         Relationships: [
           {
-            foreignKeyName: "event_stages_event_id_fkey";
+            foreignKeyName: "event_rounds_event_id_fkey";
             columns: ["event_id"];
             isOneToOne: false;
             referencedRelation: "events";
@@ -193,9 +202,11 @@ export type Database = {
           event_name: string;
           event_type: string | null;
           id: string;
+          matches: Json | null;
           organizer: string;
           start_time: string | null;
-          tables: number;
+          table_capacity: number;
+          table_count: number;
           timer_chat: number;
           timer_search: number;
           timer_start: number;
@@ -207,9 +218,11 @@ export type Database = {
           event_name: string;
           event_type?: string | null;
           id?: string;
+          matches?: Json | null;
           organizer?: string;
           start_time?: string | null;
-          tables?: number;
+          table_capacity?: number;
+          table_count?: number;
           timer_chat: number;
           timer_search: number;
           timer_start?: number;
@@ -221,9 +234,11 @@ export type Database = {
           event_name?: string;
           event_type?: string | null;
           id?: string;
+          matches?: Json | null;
           organizer?: string;
           start_time?: string | null;
-          tables?: number;
+          table_capacity?: number;
+          table_count?: number;
           timer_chat?: number;
           timer_search?: number;
           timer_start?: number;
@@ -237,21 +252,18 @@ export type Database = {
           created_at: string;
           event_id: string;
           is_ready: boolean;
-          matched: boolean | null;
         };
         Insert: {
           attendee_id: string;
           created_at?: string;
           event_id: string;
           is_ready?: boolean;
-          matched?: boolean | null;
         };
         Update: {
           attendee_id?: string;
           created_at?: string;
           event_id?: string;
           is_ready?: boolean;
-          matched?: boolean | null;
         };
         Relationships: [
           {

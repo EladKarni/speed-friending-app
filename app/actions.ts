@@ -216,9 +216,37 @@ export const createAttendeeReadyForNextRound = async () => {
   if (!user) {
     return;
   }
-  const { data, error } = await supabase.from("round_participation").insert({
-    attendee_id: user.id,
-    event_id: user.user_metadata.event_id,
-    is_ready: false,
-  });
+  const { data, error } = await supabase
+    .from("round_participation")
+    .insert({
+      attendee_id: user.id,
+      event_id: user.user_metadata.event_id,
+      is_ready: false,
+    })
+    .select("*")
+    .single();
+  return data;
+};
+
+export const setWillShareContactInfo = async (
+  willShareValue: boolean,
+  match_id: number
+) => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return;
+  }
+  const { data, error } = await supabase
+    .from("event_round_matches")
+    .update({
+      willShare: willShareValue,
+    })
+    .eq("id", match_id);
+
+  if (error) {
+    console.log("Error updating attendee", error);
+  }
 };

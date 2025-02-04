@@ -5,7 +5,8 @@ import { createClient } from "@/utils/supabase/client";
 import { EventType } from "@/utils/supabase/schema";
 import { User } from "@supabase/supabase-js";
 import { Card, Avatar } from "flowbite-react";
-import { redirect, useRouter } from "next/navigation";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const WaitingRoom = () => {
@@ -14,6 +15,7 @@ const WaitingRoom = () => {
   const [event, setEvent] = useState<EventType>();
   const [attendee, setAttendee] = useState<User>();
   const rounter = useRouter();
+
   useEffect(() => {
     const setup = async () => {
       const {
@@ -28,9 +30,11 @@ const WaitingRoom = () => {
         .select("is_ready")
         .eq("attendee_id", user.id)
         .single();
+
       if (isReady) {
         setIsReady(isReady.is_ready);
       }
+
       const { data: event, error } = await supabase
         .from("events")
         .select("*")
@@ -66,7 +70,7 @@ const WaitingRoom = () => {
       { event: "INSERT", schema: "public", table: "event_round_matches" },
       (payload) => {
         if (payload.new.attendee_id === attendee?.id) {
-          rounter.push(`/protected/attendee-match`);
+          rounter.push(`/protected/match`);
         }
       }
     )
@@ -89,10 +93,14 @@ const WaitingRoom = () => {
         <h3 className="text-lg text-slate-400">
           While you wait for the event to start, here is the event map
         </h3>
-        <img
-          src={`https://ysowurspnajoufhabtjt.supabase.co/storage/v1/object/public/${event?.event_map}`}
-          alt="map of current event"
-        />
+        <div className="relative aspect-auto w-full h-[500px] my-4">
+          <Image
+            src={`https://ysowurspnajoufhabtjt.supabase.co/storage/v1/object/public/${event?.event_map}`}
+            alt="map of current event"
+            fill
+            objectFit="contain"
+          />
+        </div>
       </div>
 
       <div className="mx-8 text-center flex flex-col gap-4">
@@ -110,8 +118,12 @@ const WaitingRoom = () => {
           cancleText={"Leave Event"}
           confirmText={isReady ? "Not Ready" : "Ready"}
         />
-        {isReady && (
+        {isReady ? (
           <p className="text-green-500">You are ready for the next round</p>
+        ) : (
+          <p className="text-red-500">
+            You are not enrolled for the next round
+          </p>
         )}
       </div>
     </div>

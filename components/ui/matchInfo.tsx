@@ -7,6 +7,7 @@ const MatchInfo = async () => {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
+    console.log("No user found");
     return redirect("/");
   }
 
@@ -14,9 +15,12 @@ const MatchInfo = async () => {
     .from("event_round_matches")
     .select("*")
     .eq("attendee_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .single();
 
   if (!attendee_match) {
+    console.log("No match found");
     return redirect("/");
   }
   const { location } = attendee_match;

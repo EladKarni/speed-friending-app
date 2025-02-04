@@ -1,5 +1,7 @@
 import { read } from "fs";
 import { redirect } from "next/navigation";
+import { Json } from "./supabase/schema";
+import { table } from "console";
 
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
@@ -37,61 +39,149 @@ export function encodedRedirect(
 // - 3. Check for an optimal assignment,,, (there's more)
 
 // *********
+
+const MAX_ITERATIONS = 100;
+
+const getRandom = <T = unknown>(list: T[]) =>
+  list[Math.floor(Math.random() * list.length)];
+
+const getMatch = (
+  attendeeId: string,
+  pastMatches: Record<string, string[]>,
+  potentialMatchIds: string[]
+) => {
+  const blacklist = [attendeeId, ...(pastMatches[attendeeId] || [])];
+
+  let iterations = 0;
+  let match = null;
+
+  while (!match && iterations < MAX_ITERATIONS) {
+    const randomAttendee = getRandom(potentialMatchIds);
+    if (!blacklist.includes(randomAttendee)) match = randomAttendee;
+    iterations++;
+  }
+  return match;
+};
+
 export const generateMatches = (
   readyAttendeesList: {
     id: string;
     name: string;
     ticketAs: string | "Women" | "Men";
   }[],
+  skippedAttendees: string[],
   round_id: string,
+  previousMatches: Record<string, string[]>,
+  table_count: number,
+  table_size: number,
   event_type?: string
 ) => {
   // Split the list into two
-  let smallerSet = readyAttendeesList.filter(
-    (attendee) => attendee.ticketAs === "Men"
-  );
-  let largerSet = readyAttendeesList.filter(
-    (attendee) => attendee.ticketAs === "Women"
-  );
+  let smallerSet = readyAttendeesList
+    .filter((attendee) => attendee.ticketAs === "Men")
+    .map(({ id }) => id);
+  let largerSet = readyAttendeesList
+    .filter((attendee) => attendee.ticketAs === "Women")
+    .map(({ id }) => id);
+
   if (smallerSet.length > largerSet.length) {
     [smallerSet, largerSet] = [largerSet, smallerSet];
   }
 
-  // Randomize the arrays
-  let shuffledSmallerSet = smallerSet
-    .map((value) => ({ value, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
-  let shuffledLargerSet = largerSet
-    .map((value) => ({ value, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
+  // // Randomize the arrays
+  // let shuffledSmallerSet = smallerSet
+  //   .map((value) => ({ value, sort: Math.random() }))
+  //   .sort((a, b) => a.sort - b.sort)
+  //   .map(({ value }) => value);
+
+  // let shuffledLargerSet = largerSet
+  //   .map((value) => ({ value, sort: Math.random() }))
+  //   .sort((a, b) => a.sort - b.sort)
+  //   .map(({ value }) => value);
 
   // Pair them off and return the matches
+
   let matchInfoArray = [];
-  for (let i = 0; i < shuffledSmallerSet.length; ++i) {
-    const table_name = "Table " + (i + 1);
+  let seats = 0;
+  let newMatchList = {} as Record<string, string[]>;
+  let noMatchList = [] as string[];
+  const roundedTableCount = table_size % 2 !== 0 ? table_size - 1 : table_size;
+  const weightedAttendeeList = [...skippedAttendees, ...smallerSet];
+
+  console.log({ weightedAttendeeList });
+  console.log({ smallerSet }, { skippedAttendees });
+  let matchId: string | null = null;
+  for (const attendeeId of weightedAttendeeList) {
+    if (skippedAttendees.includes(attendeeId)) {
+      matchId = getMatch(attendeeId, previousMatches, smallerSet);
+    } else {
+      matchId = getMatch(attendeeId, previousMatches, largerSet);
+    }
+    console.log("Match ID: ", matchId);
+    if (!matchId) {
+      continue;
+    }
+
+    const table_id = Math.floor(seats / roundedTableCount);
+    if (table_id > table_count) {
+      break;
+    }
+    const table = `Table ${String.fromCharCode(table_id + 65)}`;
+    seats += 2;
 
     matchInfoArray.push({
       event_round_id: round_id,
-      attendee_id: smallerSet[i].id,
-      location: table_name,
-      match_info: {
-        id: shuffledLargerSet[i].id.slice(-4),
-        name: shuffledLargerSet[i].name,
-      },
+      attendee_id: attendeeId,
+      location: table,
+      match_info: readyAttendeesList.find(({ id }) => id === matchId) as Json,
     });
 
     matchInfoArray.push({
       event_round_id: round_id,
-      attendee_id: shuffledLargerSet[i].id,
-      location: table_name,
-      match_info: {
-        id: shuffledSmallerSet[i].id.slice(-4),
-        name: shuffledSmallerSet[i].name,
-      },
+      attendee_id: matchId,
+      location: table,
+      match_info: readyAttendeesList.find(
+        ({ id }) => id === attendeeId
+      ) as Json,
     });
+
+    if (newMatchList[attendeeId]) {
+      newMatchList[attendeeId].push(matchId);
+    } else {
+      newMatchList[attendeeId] = [matchId];
+    }
+    if (newMatchList[matchId]) {
+      newMatchList[matchId].push(attendeeId);
+    } else {
+      newMatchList[matchId] = [attendeeId];
+    }
   }
-  return matchInfoArray;
+
+  readyAttendeesList.map((attendee) => {
+    if (!matchInfoArray.some((match) => match.attendee_id == attendee.id)) {
+      noMatchList.push(attendee.id);
+    }
+  });
+
+  return { matchInfoArray, newMatchList, noMatchList };
 };
 
+export const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+type objectType = Record<string, string[]>;
+
+export const mergeObject = (objects: objectType[]): objectType => {
+  const keys = [...objects.flatMap((o) => Object.keys(o))];
+  const newObject: objectType = {};
+
+  for (const key of keys) {
+    const values: string[] = [];
+    objects.forEach((o) => {
+      if (o[key]) {
+        values.push(...o[key]);
+      }
+    });
+    newObject[key] = Array.from(new Set(values));
+  }
+  return newObject;
+};

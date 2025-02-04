@@ -76,4 +76,4 @@ const Dashboard = async () => {
   );
 };
 
-export default Dashboard
+export default Dashboard;

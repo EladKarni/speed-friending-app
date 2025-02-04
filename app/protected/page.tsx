@@ -1,9 +1,6 @@
 import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
-import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
-import { Card } from "flowbite-react";
 import { InfoIcon } from "lucide-react";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 
 export default async function ProtectedPage() {

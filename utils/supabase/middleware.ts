@@ -64,10 +64,9 @@ export const updateSession = async (request: NextRequest) => {
       // And redirect to the new URL
       return NextResponse.redirect(eventURL);
     }
-
     if (request.nextUrl.pathname === "/" && !user.error) {
       return user.data.user.is_anonymous
-        ? NextResponse.redirect(new URL("/protected", request.url))
+        ? NextResponse.redirect(new URL("/protected/waiting-room", request.url))
         : NextResponse.redirect(new URL("/dashboard", request.url));
     }
 

@@ -13,11 +13,11 @@ import { HiShare, HiChevronDown } from "react-icons/hi";
 
 import React, { useEffect, useState } from "react";
 import TableEntry from "@/components/ui/tableEntry";
-import { redirect, useSearchParams } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { EventType } from "@/utils/supabase/schema";
-import { generateMatches } from "@/utils/utils";
+import { delay, generateMatches, mergeObject } from "@/utils/utils";
 
 const GuestList = () => {
   const supabase = createClient();
@@ -28,11 +28,12 @@ const GuestList = () => {
     { id: string; name: string; ticketAs: string | "Women" | "Men" }[]
   >([]);
   const [readyAttendees, setReadyAttendees] = useState<string[]>([]);
+  const [skippedAttendees, setSkippedAttendees] = useState<string[]>([]);
   const [eventStatus, setEventStatus] = useState<"Active" | "Inactive">(
     "Inactive"
   );
   const [currentRound, setCurrentRound] = useState<number | null>(1);
-
+  const router = useRouter();
   const handleAttendeesUpdated = async (payload: any) => {
     if (!payload || !payload.new) {
       return;
@@ -83,6 +84,7 @@ const GuestList = () => {
         .order("round_started_at", { ascending: false });
 
       if (eventRounds && eventRounds.length > 0) {
+        console.log("active events: ", eventRounds.length);
         setCurrentRound(eventRounds.length);
         const latestRound = eventRounds[0];
         if (!eventRoundsError && latestRound && latestRound.round_started_at) {
@@ -160,6 +162,36 @@ const GuestList = () => {
           setReadyAttendees((prev) =>
             prev.filter((id) => id !== payload.new.attendee_id)
           );
+        }
+      }
+    )
+    .subscribe();
+
+  supabase
+    .channel("round_updates")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "event_rounds" },
+      async (payload) => {
+        if (!payload || !payload.new) {
+          return;
+        }
+        console.log("Change Detected");
+
+        const lastRound = payload.new;
+        const now = new Date();
+        const roundStartedAt = new Date(lastRound.round_started_at);
+        const roundEndedAt = new Date(
+          roundStartedAt.getTime() +
+            lastRound.round_timers.reduce((a: any, b: any) => a + b) * 1000
+        );
+
+        if (roundEndedAt.getTime() - now.getTime() > 0) {
+          setEventStatus("Active");
+          await delay(roundEndedAt.getTime() - now.getTime());
+          setEventStatus("Inactive");
+        } else {
+          setEventStatus("Inactive");
         }
       }
     )
@@ -252,7 +284,7 @@ const GuestList = () => {
         </Table>
       </div>
       <div>
-        Current round: ??? <br />
+        Current round: {currentRound} <br />
         Number of ready attendees: {readyAttendees.length}
       </div>
       <div>
@@ -262,12 +294,20 @@ const GuestList = () => {
         disabled={eventStatus === "Active"}
         className="w-full"
         onClick={async () => {
+          if (!event) {
+            return;
+          }
           const { data, error } = await supabase
             .from("event_rounds")
             .insert([
               {
                 event_id: event_id ?? "",
-                round_timers: [45, 60, 300, 60],
+                round_timers: [
+                  event.timer_start,
+                  event.timer_search,
+                  event.timer_chat,
+                  event.timer_wrapup,
+                ],
               },
             ])
             .select()
@@ -285,16 +325,60 @@ const GuestList = () => {
 
           const generatedMatches = generateMatches(
             readyAttendeesInfo,
+            skippedAttendees,
             data.id,
-            event?.event_type || "Dating"
+            (event.matches as Record<string, string[]>) || {},
+            event.table_count,
+            event.table_capacity,
+            event.event_type || "Dating"
           );
+
+          if (Object.keys(generatedMatches.newMatchList).length === 0) {
+            console.log("No new matches generated");
+            await supabase.from("event_rounds").delete().eq("id", data.id);
+            setEventStatus("Inactive");
+            return;
+          }
+
+          console.log({ generatedMatches });
+          setSkippedAttendees(generatedMatches.noMatchList);
 
           if (data) {
             const { error } = await supabase
               .from("event_round_matches")
-              .insert(generatedMatches);
-            console.log(error);
+              .insert(generatedMatches.matchInfoArray);
           }
+          if (error) {
+            return;
+          }
+
+          const newMatchList = mergeObject([
+            event.matches as Record<string, string[]>,
+            generatedMatches.newMatchList,
+          ]);
+
+          console.log("new combined matches: ", newMatchList);
+          console.log("Previous match list: ", event.matches);
+          console.log(
+            "new matches from round: ",
+            generatedMatches.newMatchList
+          );
+
+          const { data: updatedEvent, error: updateEventError } = await supabase
+            .from("events")
+            .update({
+              matches: newMatchList,
+            })
+            .eq("id", event_id)
+            .select("*")
+            .single();
+
+          if (updateEventError) {
+            console.error(updateEventError);
+            return;
+          }
+
+          setEvent({ ...event, matches: newMatchList });
         }}
       >
         {eventStatus === "Inactive" ? "Start Event" : "Round In Progress"}

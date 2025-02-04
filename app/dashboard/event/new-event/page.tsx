@@ -86,7 +86,7 @@ const NewEvent = () => {
           event_type: newEventObject.type,
           timer_start: newEventObject.timers["start"],
           timer_search: newEventObject.timers["search"],
-          timer_chat: newEventObject.timers["chat"],
+          timer_chat: newEventObject.timers["chat"] * 60,
           timer_wrapup: newEventObject.timers["wrapup"],
           event_map: uploadData.data.fullPath,
         },
@@ -152,7 +152,15 @@ const NewEvent = () => {
             />
           </div>
           <div className="flex gap-4">
-            <Dropdown label="Dropdown button" dismissOnClick={false}>
+            <Dropdown
+              label={
+                newEventObject.type === ""
+                  ? "Dropdown button"
+                  : newEventObject.type
+              }
+              dismissOnClick={false}
+              className="w-full"
+            >
               <DropdownItem
                 onClick={() =>
                   setNewEventObject({
