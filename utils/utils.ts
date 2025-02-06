@@ -86,6 +86,16 @@ export const generatePossibleMatches = (readyAttendeesList: {
     return potentialMatches;
 }
 
+export const countPotentialMatchesPerAtendee = (matches: Record<string, string>[]) => {
+    const counts: Record<string, number> = {};
+    // initialize
+    matches.forEach(match => {
+        counts[match[1]] = match[1] in counts ? counts[match[1]] + 1 : 1;
+        counts[match[2]] = match[2] in counts ? counts[match[2]] + 1 : 1;
+    });
+    return counts;
+};
+
 export const generateMatches = (
     readyAttendeesList: {
         id: string;

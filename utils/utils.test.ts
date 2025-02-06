@@ -1,4 +1,4 @@
-import { generateMatches, generatePossibleMatches } from './utils';
+import { countPotentialMatchesPerAtendee, generatePossibleMatches } from './utils';
 import { expect, jest, test } from '@jest/globals';
 
 const setupThreeUsers = () => {
@@ -38,3 +38,13 @@ test('We exclude matches by partitioning', () => {
 });
 
 
+test('We could count the correct number of potential matches per user without overcounting', () => {
+    const { users, previousMatches } = setupThreeUsers();
+    const matches = generatePossibleMatches(users, previousMatches, true);
+    const counts = countPotentialMatchesPerAtendee(matches);
+    expect(Object.keys(counts).length).toBe(3);
+    expect(counts["a"]).toBe(1);
+    expect(counts["b"]).toBe(2);
+    expect(counts["c"]).toBe(1);
+
+});
