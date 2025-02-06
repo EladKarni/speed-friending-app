@@ -13,7 +13,7 @@ const ProfileCard = async ({ children }: { children?: React.ReactElement }) => {
     return redirect("/");
   }
   return (
-    <Card className="max-w-sm mx-auto">
+    <Card className="max-w-sm mx-auto min-w-96">
       <div className="flex flex-col justify-center items-center py-2">
         <h1 className="text-xl mb-4">Your Info</h1>
         <div className="mb-3 rounded-full shadow-lg h-24 w-24 flex justify-center items-center text-slate-800 text-4xl bg-slate-300">
