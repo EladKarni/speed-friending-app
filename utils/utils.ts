@@ -32,7 +32,7 @@ export const generatePossibleMatches = (readyAttendeesList: {
 
     for (let i = 0; i < sorted.length; i++) {
         const attendee = sorted[i];
-        const alreadyMatched = previousMatches[attendee.id];
+        const alreadyMatched = previousMatches[attendee.id] ?? [];
 
         // since we ordered the list we only have to check for matches in front of our position
         for (let j = i + 1; j < sorted.length; j++) {
