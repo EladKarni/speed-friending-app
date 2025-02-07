@@ -1,8 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { Card } from "flowbite-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import React from "react";
 
 const MatchList = async () => {
   const supabase = await createClient();
@@ -25,8 +23,10 @@ const MatchList = async () => {
     console.log("Distinct Attendee Info:", data);
   }
 
-  if (!data) {
-    return <div>No matches found</div>;
+  if (!data || data.length === 0) {
+    return (
+      <h1 className="text-center text-3xl mb-8">No matches at this time</h1>
+    );
   }
 
   return (

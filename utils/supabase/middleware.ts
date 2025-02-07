@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getCurrentUser, getUserReadyStatus } from "@/app/userActions";
+import { useUserStore } from "../store/useUserStore";
 
 export const updateSession = async (request: NextRequest) => {
   const cookieStore = await cookies();

@@ -1,6 +1,9 @@
 "use client";
-import { modifyAttendeeReadyForNextRound } from "@/app/actions";
+
+import { fetchEventData, modifyAttendeeReadyForNextRound } from "@/app/actions";
+import { getCurrentUser, getUserReadyStatus } from "@/app/userActions";
 import ConfirmPrompt from "@/components/ui/confirmPrompt";
+import { useUserStore } from "@/utils/store/useUserStore";
 import { createClient } from "@/utils/supabase/client";
 import { EventType } from "@/utils/supabase/schema";
 import { User } from "@supabase/supabase-js";
@@ -10,59 +13,43 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const WaitingRoom = () => {
-  const supabase = createClient();
-  const [isReady, setIsReady] = useState(false);
+  const attendee = useUserStore((state) => state.user_data);
+  const isReady = useUserStore((state) => state.isReady);
+  const getUserStore = useUserStore((state) => state.fetchUserData);
+  const getReadyStatus = useUserStore((state) => state.fetchReadyStatus);
+  const updateReadyStatus = useUserStore((state) => state.updateReadyStatus);
+
   const [event, setEvent] = useState<EventType>();
-  const [attendee, setAttendee] = useState<User>();
   const rounter = useRouter();
 
   useEffect(() => {
+    const fetchUser = async () => {
+      await getUserStore();
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
     const setup = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      if (!attendee) {
         return;
       }
-      setAttendee(user);
-      const { data: isReady, error: isReadyError } = await supabase
-        .from("round_participation")
-        .select("is_ready")
-        .eq("attendee_id", user.id)
-        .single();
-
-      if (isReady) {
-        setIsReady(isReady.is_ready);
-      }
-
-      const { data: event, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", user.user_metadata.event_id)
-        .single();
+      await getReadyStatus(attendee.id);
+      const event = await fetchEventData(attendee!.user_metadata.event_id);
+      console.log(event);
       if (event) {
         setEvent(event);
       }
     };
     setup();
-  }, []);
+  }, [attendee]);
 
-  supabase
-    .channel("user_status_updates")
-    .on(
-      "postgres_changes",
-      { event: "UPDATE", schema: "public", table: "round_participation" },
-      (payload) => {
-        if (!payload || !payload.new) {
-          return;
-        }
-        if (payload.new.attendee_id === attendee?.id) {
-          setIsReady(payload.new.is_ready);
-        }
-      }
-    )
-    .subscribe();
+  if (!attendee || !event) {
+    return <div>Loading...</div>;
+  }
 
+  // Subscribe to changes in the round_participation & event_round_matches tables
+  const supabase = createClient();
   supabase
     .channel("new_round_started")
     .on(
@@ -110,10 +97,10 @@ const WaitingRoom = () => {
           this page until you are ready
         </p>
         <ConfirmPrompt
-          handleConfirm={modifyAttendeeReadyForNextRound.bind(
-            null,
-            isReady ? false : true
-          )}
+          handleConfirm={async () => {
+            const newStatus = await modifyAttendeeReadyForNextRound(!isReady);
+            updateReadyStatus(!!newStatus);
+          }}
           ConfirmBtnType={"button"}
           cancleText={"Leave Event"}
           confirmText={isReady ? "Not Ready" : "Ready"}

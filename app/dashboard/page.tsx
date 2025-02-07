@@ -3,7 +3,8 @@ import { createClient } from "@/utils/supabase/server";
 import { Avatar, Card } from "flowbite-react";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
-import { fetchOrginizersEvents, getCurrentUser } from "../actions";
+import { fetchOrginizersEvents } from "../actions";
+import { getCurrentUser } from "../userActions";
 
 const Dashboard = async () => {
   const user = await getCurrentUser();

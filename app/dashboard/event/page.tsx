@@ -1,10 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, Dropdown, DropdownItem } from "flowbite-react";
-import { HiShare, HiChevronDown } from "react-icons/hi";
-
 import React, { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "flowbite-react";
 import { redirect, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
@@ -33,12 +31,14 @@ const EventPage = () => {
     (state) => state.updateSkippedAttendees
   );
   const getEvent = useEventStore((state) => state.fetchEvent);
+  const getEventAttendees = useEventStore((state) => state.fetchEventAttendees);
   const updateAttendeeStore = useEventStore(
     (state) => state.updateEventAttendees
   );
   const updateReadyAttendeesStore = useEventStore(
     (state) => state.updateReadyAttendees
   );
+  const getReadyAttendees = useEventStore((state) => state.fetchReadyAttendees);
 
   if (!event_id) {
     redirect("/dashboard");
@@ -46,6 +46,8 @@ const EventPage = () => {
 
   useEffect(() => {
     getEvent(event_id);
+    getEventAttendees(event_id);
+    getReadyAttendees(event_id);
   }, []);
 
   //Supabase subscription

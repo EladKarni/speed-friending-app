@@ -132,11 +132,16 @@ export const modifyAttendeeReadyForNextRound = async (isReady: boolean) => {
     .update({
       is_ready: isReady,
     })
-    .eq("attendee_id", user.id);
+    .eq("attendee_id", user.id)
+    .select("is_ready")
+    .single();
 
   if (error) {
     console.log("Error updating round participation", error);
+    return;
   }
+
+  return data.is_ready;
 };
 
 export const createAttendeeReadyForNextRound = async () => {
@@ -213,25 +218,16 @@ export const fetchOrginizersEvents = async (orginizer_id: string) => {
   return events;
 };
 
-export const getCurrentUser = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    console.log("No user found");
-    return;
-  }
-
-  return user;
-};
-
 export const fetchEventAttendees = async (event_id: string) => {
   const supabase = await createClient();
   const { data: attendees, error } = await supabase
     .from("event_attendees")
-    .select("*")
+    .select(
+      `
+      attendee_id,
+      attendees ( ticket_type, id, name )
+    `
+    )
     .eq("event_id", event_id);
 
   if (error) {
