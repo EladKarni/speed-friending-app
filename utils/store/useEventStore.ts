@@ -13,10 +13,12 @@ type UserStateType = {
   event_data: EventType | null;
   event_attendees: EventAttendeesType[];
   ready_event_attendees: string[];
+  skipped_event_attendees: string[];
   isEventActive: boolean;
   currentRoundStage: "waiting" | "matching" | "chatting" | "done";
   currentRound: number;
-  updateEventData: (event: EventType) => void;
+  updateCurrentEvent: (newEventData: EventType) => void;
+  updateSkippedAttendees: (attendee_id: string[]) => void;
   fetchEvent: (id: string) => void;
   updateEventAttendees: (new_attendee_alert: any) => void;
   updateReadyAttendees: (new_attendee_alert: any) => void;
@@ -28,11 +30,22 @@ export const useEventStore = create<UserStateType>((set) => ({
   event_data: null,
   event_attendees: [],
   ready_event_attendees: [],
+  skipped_event_attendees: [],
   isEventActive: false,
   currentRoundStage: "waiting",
   currentRound: 1,
-  updateEventData: (new_event_data) =>
-    set((state) => ({ event_data: new_event_data })),
+  updateCurrentEvent: (newEventData) => {
+    set((state) => ({
+      event_data: newEventData,
+    }));
+  },
+  updateSkippedAttendees: (attendee_id) =>
+    set((state) => ({
+      skipped_event_attendees: [
+        ...state.skipped_event_attendees,
+        ...attendee_id,
+      ],
+    })),
   fetchEvent: async (event_id) => {
     const event = await fetchEventData(event_id);
     if (!event) {

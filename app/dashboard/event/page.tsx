@@ -10,6 +10,10 @@ import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { useEventStore } from "@/utils/store/useEventStore";
 import AttendeeTable from "@/components/attendeeTable";
+import { startNewRound, updateEventEntry } from "@/app/actions";
+import { generateMatches, mergeObject } from "@/utils/utils";
+import { Json } from "@/utils/supabase/schema";
+import CopyLinkInput from "@/components/ui/copyLinkInput";
 
 const EventPage = () => {
   const searchParams = useSearchParams();
@@ -20,7 +24,14 @@ const EventPage = () => {
   const readyAttendees = useEventStore((state) => state.ready_event_attendees);
   const eventStatus = useEventStore((state) => state.currentRoundStage);
   const currentRound = useEventStore((state) => state.currentRound);
+  const skippedAttendees = useEventStore(
+    (state) => state.skipped_event_attendees
+  );
 
+  const setNewEventData = useEventStore((state) => state.updateCurrentEvent);
+  const updateSkippedAttendees = useEventStore(
+    (state) => state.updateSkippedAttendees
+  );
   const getEvent = useEventStore((state) => state.fetchEvent);
   const updateAttendeeStore = useEventStore(
     (state) => state.updateEventAttendees
@@ -75,6 +86,60 @@ const EventPage = () => {
     return <div>Loading...</div>;
   }
 
+  const handleNewRoundStart = async () => {
+    const roundData = await startNewRound(event_data);
+    if (!roundData) {
+      return;
+    }
+    const readyAttendeesInfo = event_attendees.filter((attendee) =>
+      readyAttendees.includes(attendee.id)
+    );
+
+    const generatedMatches = generateMatches(
+      readyAttendeesInfo,
+      skippedAttendees,
+      roundData.id,
+      (event_data.matches as Record<string, string[]>) || {},
+      event_data.table_count,
+      event_data.table_capacity,
+      event_data.event_type || "Dating"
+    );
+
+    if (Object.keys(generatedMatches.newMatchList).length === 0) {
+      console.log("No new matches generated");
+      await supabase.from("event_rounds").delete().eq("id", roundData.id);
+      return;
+    }
+
+    updateSkippedAttendees(generatedMatches.noMatchList);
+
+    if (roundData && generatedMatches.matchInfoArray.length > 0) {
+      const { error } = await supabase.from("event_round_matches").insert(
+        generatedMatches.matchInfoArray.map((match) => ({
+          ...match,
+          match_info: match.match_info || {},
+        }))
+      );
+
+      if (error) {
+        return;
+      }
+    }
+
+    const newMatchList = mergeObject([
+      event_data.matches as Record<string, string[]>,
+      generatedMatches.newMatchList,
+    ]) as Json;
+
+    const updatedEventData = await updateEventEntry(event_id, newMatchList);
+
+    if (!updatedEventData) {
+      return;
+    }
+
+    setNewEventData(updatedEventData);
+  };
+
   return (
     <Card>
       <Link
@@ -83,24 +148,7 @@ const EventPage = () => {
       >
         Show QR
       </Link>
-      <div className="flex gap-4">
-        <Dropdown
-          label=""
-          dismissOnClick={false}
-          renderTrigger={() => (
-            <Button variant="ghost" className="border border-gray-500 w-full">
-              <HiChevronDown size={24} /> Actions
-            </Button>
-          )}
-        >
-          <DropdownItem>Friend</DropdownItem>
-          <DropdownItem>Dating</DropdownItem>
-          <DropdownItem>Other</DropdownItem>
-        </Dropdown>
-        <Button>
-          <HiShare />
-        </Button>
-      </div>
+      <CopyLinkInput url={window.location.href} />
       <h2>Welcome to {event_data.event_name}</h2>
 
       <AttendeeTable
@@ -111,79 +159,7 @@ const EventPage = () => {
       <Button
         disabled={eventStatus !== "waiting"}
         className="w-full"
-        onClick={async () => {
-          // const { data, error } = await supabase
-          //   .from("event_rounds")
-          //   .insert([
-          //     {
-          //       event_id: event_id ?? "",
-          //       round_timers: [
-          //         event.timer_start,
-          //         event.timer_search,
-          //         event.timer_chat,
-          //         event.timer_wrapup,
-          //       ],
-          //     },
-          //   ])
-          //   .select()
-          //   .single();
-          // if (error) {
-          //   console.error(error);
-          //   return;
-          // }
-          // // create an array of only ready attendees
-          // const readyAttendeesInfo = event_attendees.filter((attendee) =>
-          //   readyAttendees.includes(attendee.id)
-          // );
-          // const generatedMatches = generateMatches(
-          //   readyAttendeesInfo,
-          //   skippedAttendees,
-          //   data.id,
-          //   (event.matches as Record<string, string[]>) || {},
-          //   event.table_count,
-          //   event.table_capacity,
-          //   event.event_type || "Dating"
-          // );
-          // if (Object.keys(generatedMatches.newMatchList).length === 0) {
-          //   console.log("No new matches generated");
-          //   await supabase.from("event_rounds").delete().eq("id", data.id);
-          //   setEventStatus("Inactive");
-          //   return;
-          // }
-          // console.log({ generatedMatches });
-          // setSkippedAttendees(generatedMatches.noMatchList);
-          // if (data) {
-          //   const { error } = await supabase
-          //     .from("event_round_matches")
-          //     .insert(generatedMatches.matchInfoArray);
-          // }
-          // if (error) {
-          //   return;
-          // }
-          // const newMatchList = mergeObject([
-          //   event.matches as Record<string, string[]>,
-          //   generatedMatches.newMatchList,
-          // ]);
-          // console.log("new combined matches: ", newMatchList);
-          // console.log("Previous match list: ", event.matches);
-          // console.log(
-          //   "new matches from round: ",
-          //   generatedMatches.newMatchList
-          // );
-          // const { data: updatedEvent, error: updateEventError } = await supabase
-          //   .from("events")
-          //   .update({
-          //     matches: newMatchList,
-          //   })
-          //   .eq("id", event_id)
-          //   .select("*")
-          //   .single();
-          // if (updateEventError) {
-          //   console.error(updateEventError);
-          //   return;
-          // }
-          // setEvent({ ...event, matches: newMatchList });
-        }}
+        onClick={handleNewRoundStart}
       >
         {eventStatus === "waiting"
           ? "Start Round"

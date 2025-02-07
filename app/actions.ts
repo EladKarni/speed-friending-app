@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import getEvent from "@/utils/supabase/getEvent";
 import { EventAttendeesType } from "@/utils/store/useEventStore";
+import { EventType, Json } from "@/utils/supabase/schema";
 
 export const AnonSignInAction = async (formData: FormData) => {
   const name = formData.get("name")?.toString();
@@ -273,4 +274,49 @@ export const fetchAttendeesData = async (attendee_ids: string) => {
     ticketAs: attendee.ticket_type,
   } as EventAttendeesType;
   return new_event_attendee_object;
+};
+
+export const startNewRound = async (event: EventType) => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("event_rounds")
+    .insert([
+      {
+        event_id: event.id,
+        round_timers: [
+          event.timer_start,
+          event.timer_search,
+          event.timer_chat,
+          event.timer_wrapup,
+        ],
+      },
+    ])
+    .select()
+    .single();
+  if (error) {
+    console.error(error);
+    return;
+  }
+  return data;
+};
+
+export const updateEventEntry = async (
+  event_id: string,
+  newMatchList: Json
+) => {
+  const supabase = await createClient();
+  const { data: updatedEvent, error: updateEventError } = await supabase
+    .from("events")
+    .update({
+      matches: newMatchList,
+    })
+    .eq("id", event_id)
+    .select("*")
+    .single();
+
+  if (updateEventError) {
+    console.error(updateEventError);
+    return;
+  }
+  return updatedEvent;
 };
