@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import getEvent from "@/utils/supabase/getEvent";
+import { EventAttendeesType } from "@/utils/store/useEventStore";
 
 export const AnonSignInAction = async (formData: FormData) => {
   const name = formData.get("name")?.toString();
@@ -111,77 +112,6 @@ export const signInAction = async (formData: FormData) => {
   return redirect("/protected");
 };
 
-export const forgotPasswordAction = async (formData: FormData) => {
-  const email = formData.get("email")?.toString();
-  const supabase = await createClient();
-  const origin = (await headers()).get("origin");
-  const callbackUrl = formData.get("callbackUrl")?.toString();
-
-  if (!email) {
-    return encodedRedirect("error", "/forgot-password", "Email is required");
-  }
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?redirect_to=/protected/reset-password`,
-  });
-
-  if (error) {
-    console.error(error.message);
-    return encodedRedirect(
-      "error",
-      "/forgot-password",
-      "Could not reset password"
-    );
-  }
-
-  if (callbackUrl) {
-    return redirect(callbackUrl);
-  }
-
-  return encodedRedirect(
-    "success",
-    "/forgot-password",
-    "Check your email for a link to reset your password."
-  );
-};
-
-export const resetPasswordAction = async (formData: FormData) => {
-  const supabase = await createClient();
-
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
-
-  if (!password || !confirmPassword) {
-    encodedRedirect(
-      "error",
-      "/protected/reset-password",
-      "Password and confirm password are required"
-    );
-  }
-
-  if (password !== confirmPassword) {
-    encodedRedirect(
-      "error",
-      "/protected/reset-password",
-      "Passwords do not match"
-    );
-  }
-
-  const { error } = await supabase.auth.updateUser({
-    password: password,
-  });
-
-  if (error) {
-    encodedRedirect(
-      "error",
-      "/protected/reset-password",
-      "Password update failed"
-    );
-  }
-
-  encodedRedirect("success", "/protected/reset-password", "Password updated");
-};
-
 export const signOutAction = async () => {
   const supabase = await createClient();
   await supabase.auth.signOut();
@@ -249,4 +179,98 @@ export const setWillShareContactInfo = async (
   if (error) {
     console.log("Error updating attendee", error);
   }
+};
+
+export const fetchEventData = async (event_id: string) => {
+  const supabase = await createClient();
+  const { data: event, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", event_id)
+    .single();
+
+  if (error) {
+    console.log("Error fetching event", error);
+    return;
+  }
+
+  return event;
+};
+
+export const fetchOrginizersEvents = async (orginizer_id: string) => {
+  const supabase = await createClient();
+  const { data: events, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("organizer", orginizer_id);
+
+  if (error) {
+    console.log("Error fetching event", error);
+    return;
+  }
+
+  return events;
+};
+
+export const getCurrentUser = async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    console.log("No user found");
+    return;
+  }
+
+  return user;
+};
+
+export const fetchEventAttendees = async (event_id: string) => {
+  const supabase = await createClient();
+  const { data: attendees, error } = await supabase
+    .from("event_attendees")
+    .select("*")
+    .eq("event_id", event_id);
+
+  if (error) {
+    console.log("Error fetching event attendees", error);
+    return;
+  }
+
+  return attendees;
+};
+
+export const fetchReadyAttendees = async (event_id: string) => {
+  const supabase = await createClient();
+  const { data: ready_attendees, error } = await supabase
+    .from("round_participation")
+    .select("*")
+    .eq("event_id", event_id)
+    .eq("is_ready", true);
+
+  if (error) {
+    console.log("Error fetching ready attendees", error);
+    return;
+  }
+
+  return ready_attendees;
+};
+
+export const fetchAttendeesData = async (attendee_ids: string) => {
+  const supabase = await createClient();
+  const { data: attendee, error } = await supabase
+    .from("attendees")
+    .select("*")
+    .eq("id", attendee_ids)
+    .single();
+  if (!attendee || attendee.ticket_type === null) {
+    return;
+  }
+  const new_event_attendee_object = {
+    id: attendee_ids,
+    name: attendee.name,
+    ticketAs: attendee.ticket_type,
+  } as EventAttendeesType;
+  return new_event_attendee_object;
 };

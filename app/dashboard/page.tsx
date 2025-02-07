@@ -3,23 +3,18 @@ import { createClient } from "@/utils/supabase/server";
 import { Avatar, Card } from "flowbite-react";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
+import { fetchOrginizersEvents, getCurrentUser } from "../actions";
 
 const Dashboard = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: events, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("organizer", user?.id || "");
-
-  if (error) {
-    console.log({ error });
-    return <div>Error: No event found</div>;
+  const user = await getCurrentUser();
+  if (!user) {
+    return <div>loading...</div>;
   }
 
+  const events = await fetchOrginizersEvents(user?.id);
+  if (!events) {
+    return <div>loading...</div>;
+  }
   return (
     <div className="w-full flex flex-col gap-8">
       <Card className=" text-center">

@@ -33,270 +33,279 @@ export type Json =
 export type Database = {
   graphql_public: {
     Tables: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
       graphql: {
         Args: {
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-          extensions?: Json;
-        };
-        Returns: Json;
-      };
-    };
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       attendees: {
         Row: {
-          date_of_birth: string | null;
-          email: string | null;
-          id: string;
-          joined_on: string;
-          name: string;
-          ticket_type: string | null;
-        };
+          date_of_birth: string | null
+          email: string | null
+          id: string
+          joined_on: string
+          name: string
+          ticket_type: string | null
+        }
         Insert: {
-          date_of_birth?: string | null;
-          email?: string | null;
-          id?: string;
-          joined_on?: string;
-          name: string;
-          ticket_type?: string | null;
-        };
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string
+          joined_on?: string
+          name: string
+          ticket_type?: string | null
+        }
         Update: {
-          date_of_birth?: string | null;
-          email?: string | null;
-          id?: string;
-          joined_on?: string;
-          name?: string;
-          ticket_type?: string | null;
-        };
-        Relationships: [];
-      };
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string
+          joined_on?: string
+          name?: string
+          ticket_type?: string | null
+        }
+        Relationships: []
+      }
       event_attendees: {
         Row: {
-          attendee_id: string;
-          created_at: string;
-          event_id: string;
-        };
+          attendee_id: string
+          created_at: string
+          event_id: string
+        }
         Insert: {
-          attendee_id: string;
-          created_at?: string;
-          event_id: string;
-        };
+          attendee_id: string
+          created_at?: string
+          event_id: string
+        }
         Update: {
-          attendee_id?: string;
-          created_at?: string;
-          event_id?: string;
-        };
+          attendee_id?: string
+          created_at?: string
+          event_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "event_attendees_attendee_id_fkey";
-            columns: ["attendee_id"];
-            isOneToOne: false;
-            referencedRelation: "attendees";
-            referencedColumns: ["id"];
+            foreignKeyName: "event_attendees_attendee_id_fkey"
+            columns: ["attendee_id"]
+            isOneToOne: false
+            referencedRelation: "attendees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "event_attendees_event_id_fkey";
-            columns: ["event_id"];
-            isOneToOne: false;
-            referencedRelation: "events";
-            referencedColumns: ["id"];
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       event_round_matches: {
         Row: {
-          attendee_id: string;
-          attendee_notes: string | null;
-          created_at: string;
-          event_round_id: string;
-          id: number;
-          location: string;
-          match_info: Json;
-          willShare: boolean | null;
-        };
+          attendee_id: string
+          attendee_notes: string | null
+          created_at: string
+          event_round_id: string
+          id: number
+          location: string
+          match_info: Json
+          willShare: boolean | null
+        }
         Insert: {
-          attendee_id: string;
-          attendee_notes?: string | null;
-          created_at?: string;
-          event_round_id: string;
-          id?: number;
-          location: string;
-          match_info: Json;
-          willShare?: boolean | null;
-        };
+          attendee_id: string
+          attendee_notes?: string | null
+          created_at?: string
+          event_round_id: string
+          id?: number
+          location: string
+          match_info: Json
+          willShare?: boolean | null
+        }
         Update: {
-          attendee_id?: string;
-          attendee_notes?: string | null;
-          created_at?: string;
-          event_round_id?: string;
-          id?: number;
-          location?: string;
-          match_info?: Json;
-          willShare?: boolean | null;
-        };
+          attendee_id?: string
+          attendee_notes?: string | null
+          created_at?: string
+          event_round_id?: string
+          id?: number
+          location?: string
+          match_info?: Json
+          willShare?: boolean | null
+        }
         Relationships: [
           {
-            foreignKeyName: "event_round_matches_attendee_id_fkey";
-            columns: ["attendee_id"];
-            isOneToOne: false;
-            referencedRelation: "attendees";
-            referencedColumns: ["id"];
+            foreignKeyName: "event_round_matches_attendee_id_fkey"
+            columns: ["attendee_id"]
+            isOneToOne: false
+            referencedRelation: "attendees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "event_round_matches_event_round_id_fkey";
-            columns: ["event_round_id"];
-            isOneToOne: false;
-            referencedRelation: "event_rounds";
-            referencedColumns: ["id"];
+            foreignKeyName: "event_round_matches_event_round_id_fkey"
+            columns: ["event_round_id"]
+            isOneToOne: false
+            referencedRelation: "event_rounds"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       event_rounds: {
         Row: {
-          event_id: string;
-          id: string;
-          round_started_at: string;
-          round_timers: number[];
-        };
+          event_id: string
+          id: string
+          round_started_at: string
+          round_timers: number[]
+        }
         Insert: {
-          event_id: string;
-          id?: string;
-          round_started_at?: string;
-          round_timers?: number[];
-        };
+          event_id: string
+          id?: string
+          round_started_at?: string
+          round_timers?: number[]
+        }
         Update: {
-          event_id?: string;
-          id?: string;
-          round_started_at?: string;
-          round_timers?: number[];
-        };
+          event_id?: string
+          id?: string
+          round_started_at?: string
+          round_timers?: number[]
+        }
         Relationships: [
           {
-            foreignKeyName: "event_rounds_event_id_fkey";
-            columns: ["event_id"];
-            isOneToOne: false;
-            referencedRelation: "events";
-            referencedColumns: ["id"];
+            foreignKeyName: "event_rounds_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       events: {
         Row: {
-          created_at: string;
-          event_map: string | null;
-          event_name: string;
-          event_type: string | null;
-          id: string;
-          matches: Json | null;
-          organizer: string;
-          start_time: string | null;
-          table_capacity: number;
-          table_count: number;
-          timer_chat: number;
-          timer_search: number;
-          timer_start: number;
-          timer_wrapup: number;
-        };
+          created_at: string
+          event_map: string | null
+          event_name: string
+          event_type: string | null
+          id: string
+          matches: Json | null
+          organizer: string
+          start_time: string | null
+          table_capacity: number
+          table_count: number
+          timer_chat: number
+          timer_search: number
+          timer_start: number
+          timer_wrapup: number
+        }
         Insert: {
-          created_at?: string;
-          event_map?: string | null;
-          event_name: string;
-          event_type?: string | null;
-          id?: string;
-          matches?: Json | null;
-          organizer?: string;
-          start_time?: string | null;
-          table_capacity?: number;
-          table_count?: number;
-          timer_chat: number;
-          timer_search: number;
-          timer_start?: number;
-          timer_wrapup: number;
-        };
+          created_at?: string
+          event_map?: string | null
+          event_name: string
+          event_type?: string | null
+          id?: string
+          matches?: Json | null
+          organizer?: string
+          start_time?: string | null
+          table_capacity?: number
+          table_count?: number
+          timer_chat: number
+          timer_search: number
+          timer_start?: number
+          timer_wrapup: number
+        }
         Update: {
-          created_at?: string;
-          event_map?: string | null;
-          event_name?: string;
-          event_type?: string | null;
-          id?: string;
-          matches?: Json | null;
-          organizer?: string;
-          start_time?: string | null;
-          table_capacity?: number;
-          table_count?: number;
-          timer_chat?: number;
-          timer_search?: number;
-          timer_start?: number;
-          timer_wrapup?: number;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          event_map?: string | null
+          event_name?: string
+          event_type?: string | null
+          id?: string
+          matches?: Json | null
+          organizer?: string
+          start_time?: string | null
+          table_capacity?: number
+          table_count?: number
+          timer_chat?: number
+          timer_search?: number
+          timer_start?: number
+          timer_wrapup?: number
+        }
+        Relationships: []
+      }
       round_participation: {
         Row: {
-          attendee_id: string;
-          created_at: string;
-          event_id: string;
-          is_ready: boolean;
-        };
+          attendee_id: string
+          created_at: string
+          event_id: string
+          is_ready: boolean
+        }
         Insert: {
-          attendee_id: string;
-          created_at?: string;
-          event_id: string;
-          is_ready?: boolean;
-        };
+          attendee_id: string
+          created_at?: string
+          event_id: string
+          is_ready?: boolean
+        }
         Update: {
-          attendee_id?: string;
-          created_at?: string;
-          event_id?: string;
-          is_ready?: boolean;
-        };
+          attendee_id?: string
+          created_at?: string
+          event_id?: string
+          is_ready?: boolean
+        }
         Relationships: [
           {
-            foreignKeyName: "round_participation_attendee_id_fkey";
-            columns: ["attendee_id"];
-            isOneToOne: false;
-            referencedRelation: "attendees";
-            referencedColumns: ["id"];
+            foreignKeyName: "round_participation_attendee_id_fkey"
+            columns: ["attendee_id"]
+            isOneToOne: false
+            referencedRelation: "attendees"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "round_participation_event_id_fkey";
-            columns: ["event_id"];
-            isOneToOne: false;
-            referencedRelation: "events";
-            referencedColumns: ["id"];
+            foreignKeyName: "round_participation_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
           },
-        ];
-      };
-    };
+        ]
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      [_ in never]: never;
-    };
+      get_distinct_attendee_info: {
+        Args: {
+          my_uuid: string
+        }
+        Returns: {
+          id: string
+          name: string
+          email: string
+        }[]
+      }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
 type PublicSchema = Database[Extract<keyof Database, "public">]
 

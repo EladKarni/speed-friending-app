@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { Card } from "flowbite-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
 
@@ -11,54 +12,48 @@ const MatchList = async () => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return redirect("/");
+    redirect("/login");
   }
 
-  const { data: my_matches, error } = await supabase
-    .from("event_round_matches")
-    .select("*")
-    .eq("attendee_id", user.id);
-
-  const { data: other_matches } = await supabase
-    .from("event_round_matches")
-    .select("*")
-    .eq("match_info->>id", user.id);
-
-  if (error || other_matches === null) {
-    console.error({ error });
-    return <div>Error: No matches found</div>;
-  }
-  // compare both arrays of matches and return the matches where both users have willShare as true
-  const matches = my_matches.filter((match) => {
-    const match_info = match.match_info as { id: string; name: string };
-    return other_matches.some(
-      (other_match) =>
-        match_info.id === other_match.attendee_id &&
-        match.willShare &&
-        other_match.willShare
-    );
+  const { data, error } = await supabase.rpc("get_distinct_attendee_info", {
+    my_uuid: user.id,
   });
 
-  console.log({ matches }, { my_matches }, { other_matches });
+  if (error) {
+    console.error("Error fetching attendee info:", error);
+  } else {
+    console.log("Distinct Attendee Info:", data);
+  }
+
+  if (!data) {
+    return <div>No matches found</div>;
+  }
+
   return (
     <div>
-      <h1>Your matches</h1>
-      {matches.map(({ match_info }) => (
-        <Card key={match_info.id}>
-          <div className="w-full flex justify-between">
-            <h2 className="text-2xl">{match_info.name}</h2>
-            <p className="italic text-slate-300">#F254</p>
-          </div>
-          <div>
-            <h3 className="text-slate-300">Time Preference</h3>
-            <p>Anytime</p>
-          </div>
-          <div>
-            <h3 className="text-slate-300">Contact Info</h3>
-            <p>{`(412) 555-5555`}</p>
-          </div>
-        </Card>
-      ))}
+      <h1 className="text-center text-3xl mb-8">Your matches</h1>
+      <div className="flex flex-col gap-4">
+        {data.map(({ id, name, email }) => (
+          <Card key={id}>
+            <div className="w-full flex justify-between">
+              <h2 className="text-2xl">{name}</h2>
+              <p className="italic text-slate-300">
+                #{id.slice(id.length - 4, id.length).toUpperCase()}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-slate-300">Time Preference</h3>
+              <p>Anytime</p>
+            </div>
+            <div>
+              <h3 className="text-slate-300">Contact Info</h3>
+              <a href={`mailto:${email}`} className="text-blue-300">
+                {email}
+              </a>
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
