@@ -5,71 +5,63 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 const MatchSearchPage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return redirect("/protected/match");
-  }
+    if (!user) {
+        return redirect("/protected/match");
+    }
 
-  const { data } = await supabase
-    .from("events")
-    .select("*")
-    .eq("id", user.user_metadata.event_id)
-    .single();
+    const { data } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", user.user_metadata.event_id)
+        .single();
 
-  if (!data) {
-    return redirect("/protected/match");
-  }
+    if (!data) {
+        return redirect("/protected/match");
+    }
 
-  const { data: round_info } = await supabase
-    .from("event_rounds")
-    .select("*")
-    .eq("event_id", data.id)
-    .order("round_started_at", { ascending: false })
-    .limit(1)
-    .single();
+    const { data: round_info } = await supabase
+        .from("event_rounds")
+        .select("*")
+        .eq("event_id", data.id)
+        .order("round_started_at", { ascending: false })
+        .limit(1)
+        .single();
 
-  if (!round_info) {
-    console.log("No Info");
-    return redirect("/protected/waiting-room");
-  }
+    if (!round_info) {
+        console.log("No Info");
+        return redirect("/protected/waiting-room");
+    }
 
-  const now = new Date();
-  const roundStartedAt = new Date(round_info.round_started_at || 0);
-  const roundEndsAt = new Date(
-    roundStartedAt.getTime() +
-      (round_info.round_timers[0] +
-        round_info.round_timers[1] +
-        round_info.round_timers[2] * 1000)
-  );
+    if (round_info.round_ended_at) {
+        console.log('round already ended', round_info.id);
+        redirect("/protected/waiting-room");
+    }
 
-  if (roundEndsAt.getTime() < now.getTime()) {
-    redirect("/protected/waiting-room");
-  }
-
-  return (
-    <section className="flex flex-col justify-between flex-1">
-      <MatchSearch event_data={data} />
-      <div>
-        <h5 className="mb-1 xl font-medium text-gray-700 dark:text-gray-400">
-          Did you find your match?
-        </h5>
-        <div className="flex justify-between gap-4">
-          <Button className="mt-4 flex-1" color="gray" disabled>
-            Not Found
-          </Button>
-          <Link href={"/protected/match/match-chat"} className="mt-4 flex-1">
-            <Button color="blue" className="w-full">
-              Found
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
+    return (
+        <section className="flex flex-col justify-between flex-1">
+            <MatchSearch event_data={data} />
+            <div>
+                <h5 className="mb-1 xl font-medium text-gray-700 dark:text-gray-400">
+                    Did you find your match?
+                </h5>
+                <div className="flex justify-between gap-4">
+                    <Button className="mt-4 flex-1" color="gray" disabled>
+                        Not Found
+                    </Button>
+                    <Link href={"/protected/match/match-chat"} className="mt-4 flex-1">
+                        <Button color="blue" className="w-full">
+                            Found
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        </section>
+    );
 };
 
 export default MatchSearchPage;

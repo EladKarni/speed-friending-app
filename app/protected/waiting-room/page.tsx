@@ -1,16 +1,14 @@
 "use client";
 
 import { fetchEventData, modifyAttendeeReadyForNextRound } from "@/app/actions";
-import { getCurrentUser, getUserReadyStatus } from "@/app/userActions";
 import ConfirmPrompt from "@/components/ui/confirmPrompt";
 import { useUserStore } from "@/utils/store/useUserStore";
-import { createClient } from "@/utils/supabase/client";
 import { EventType } from "@/utils/supabase/schema";
-import { User } from "@supabase/supabase-js";
 import { Card, Avatar } from "flowbite-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { subscribeAlert } from "@/utils/supabase/alerts";
 
 const WaitingRoom = () => {
     const attendee = useUserStore((state) => state.user_data);
@@ -49,19 +47,13 @@ const WaitingRoom = () => {
     }
 
     // Subscribe to changes in the round_participation & event_round_matches tables
-    const supabase = createClient();
-    supabase
-        .channel("event_round")
-        .on(
-            "postgres_changes",
-            { event: "INSERT", schema: "public", table: "alerts" },
-            (payload) => {
-                if (payload.new.alert_type === 'StartRound') {
-                    router.push(`/protected/match`);
-                }
-            }
-        )
-        .subscribe();
+
+    subscribeAlert((alert) => {
+        if (alert.alert_type === 'StartRound') {
+            router.push(`/protected/match`);
+        }
+    })
+
 
     return (
         <div className="w-full flex flex-col gap-8">
