@@ -89,71 +89,73 @@ const EventPage = () => {
     }
 
     const handleNewRoundStart = async () => {
-        const roundData = await startNewRound(event_data);
-        if (!roundData) {
-            console.error("No round data returned when starting round");
-            return;
-        }
-        const readyAttendeesInfo = event_attendees.filter((attendee) =>
-            readyAttendees.includes(attendee.id)
+      const roundData = await startNewRound(event_data);
+      if (!roundData) {
+        console.error("No round data returned when starting round");
+        return;
+      }
+      const readyAttendeesInfo = event_attendees.filter((attendee) =>
+        readyAttendees.includes(attendee.id)
+      );
+
+      console.warn({ skippedAttendees });
+      const generatedMatches = generateMatches(
+        readyAttendeesInfo,
+        skippedAttendees,
+        roundData.id,
+        (event_data.matches as Record<string, string[]>) || {},
+        event_data.table_count,
+        event_data.table_capacity,
+        event_data.event_type || "SF"
+      );
+
+      if (Object.keys(generatedMatches.newMatchList).length === 0) {
+        console.log("No new matches generated");
+        await supabase.from("event_rounds").delete().eq("id", roundData.id);
+        return;
+      }
+
+      updateSkippedAttendees(generatedMatches.noMatchList);
+
+      if (roundData && generatedMatches.matchInfoArray.length > 0) {
+        console.log(generatedMatches);
+
+        let { error } = await supabase.from("event_round_matches").insert(
+          generatedMatches.matchInfoArray.map((match) => ({
+            ...match,
+            match_info: match.match_info || {},
+          }))
         );
 
-        const generatedMatches = generateMatches(
-            readyAttendeesInfo,
-            skippedAttendees,
-            roundData.id,
-            (event_data.matches as Record<string, string[]>) || {},
-            event_data.table_count,
-            event_data.table_capacity,
-            event_data.event_type || "Dating"
-        );
-
-        if (Object.keys(generatedMatches.newMatchList).length === 0) {
-            console.log("No new matches generated");
-            await supabase.from("event_rounds").delete().eq("id", roundData.id);
-            return;
+        if (error) {
+          console.error("Error inserting match data:", error);
+          return;
         }
 
-        updateSkippedAttendees(generatedMatches.noMatchList);
+        ({ error } = await supabase.from("alerts").insert({
+          event_id: roundData.event_id,
+          related_data_id: roundData.id,
+          alert_type: "StartRound",
+        }));
 
-        if (roundData && generatedMatches.matchInfoArray.length > 0) {
-            let { error } = await supabase.from("event_round_matches").insert(
-                generatedMatches.matchInfoArray.map((match) => ({
-                    ...match,
-                    match_info: match.match_info || {},
-                }))
-            );
-
-            if (error) {
-                console.error("Error inserting match data:", error);
-                return;
-            }
-
-            ({ error } = await supabase.from("alerts").insert({
-                event_id: roundData.event_id,
-                related_data_id: roundData.id,
-                alert_type: 'StartRound'
-            }));
-
-            if (error) {
-                console.error("Error inserting match data:", error);
-                return;
-            }
-
+        if (error) {
+          console.error("Error inserting match data:", error);
+          return;
         }
+      }
 
-        const newMatchList = mergeObject([
-            event_data.matches as Record<string, string[]>,
-            generatedMatches.newMatchList,
-        ]) as Json;
+      const newMatchList = mergeObject([
+        event_data.matches as Record<string, string[]>,
+        generatedMatches.newMatchList,
+      ]) as Json;
 
-        const updatedEventData = await updateEventEntry(event_id, newMatchList);
+      const updatedEventData = await updateEventEntry(event_id, newMatchList);
 
-        if (!updatedEventData) {
-            return;
-        }
+      if (!updatedEventData) {
+        return;
+      }
 
-        setNewEventData(updatedEventData);
+      setNewEventData(updatedEventData);
     };
 
     return (

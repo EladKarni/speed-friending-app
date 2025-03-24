@@ -20,7 +20,7 @@ type UserStateType = {
   ready_event_attendees: string[];
   skipped_event_attendees: string[];
   isEventActive: boolean;
-  currentRoundStage: "waiting" | "matching" | "chatting" | "done";
+  currentRoundStage: "searching" | "matching" | "chatting" | "waiting";
   currentRound: number;
   fetchEvent: (id: string) => void;
   fetchEventAttendees: (id: string) => void;

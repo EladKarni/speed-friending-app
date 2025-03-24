@@ -1,35 +1,71 @@
 "use client";
 import QRCode from "react-qr-code";
-import { Clipboard } from "flowbite-react";
 import { useSearchParams } from "next/navigation";
-import CopyLinkInput from "@/components/ui/copyLinkInput";
+import { useState } from "react";
+import { cn } from "@/utils/cn";
+import SearchCountdown from "@/components/ui/searchCountdown";
+import { useEventStore } from "@/utils/store/useEventStore";
+import { createClient } from "@/utils/supabase/client";
 
-type SharePageProps = {
-  event: string;
-};
-
-const SharePage = ({ event = "https://google.com" }: SharePageProps) => {
+const SharePage = () => {
   const searchParams = useSearchParams();
   const event_id = searchParams.get("event_id");
+  const [currentRoundPhase, setCurrentRoundPhase] = useState<0 | 1 | 2 | 3>(2);
+  const [currentTimerStart, setCurrentTimerStart] = useState(75);
+  const eventStatus = useEventStore((state) => state.currentRoundStage);
 
-  const shareableUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/event?event_id=${event_id}`;
+  const updateCurrentRoundPhase = (payload: any) => {
+    const { alert_type, created_at, related_data_id, event_id } = payload.new;
+    console.log(alert_type, created_at, related_data_id, event_id);
+
+    // setCurrentRoundPhase(newPhase);
+    // if (newPhase === 0) {
+    //   setCurrentTimerStart(75);
+    // }
+  };
+
+  //Supabase subscription
+  const supabase = createClient();
+  supabase
+    .channel("round_phases_changes")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "alerts" },
+      updateCurrentRoundPhase
+    )
+    .subscribe();
 
   if (!event_id) {
     return <div>No event selected</div>;
   }
 
   return (
-    <div className="max-w-md mx-auto grid gap-4">
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Use the provided link or QR code to get the shareable URL for this
-        specific event.
-      </p>
+    <div className="max-w-md mx-auto grid gap-4 h-full justify-between">
+      <h1 className="text-2xl text-center text-slate-800 dark:text-slate-100">
+        Scan This Link To join the next Round
+      </h1>
       <QRCode
-        size={256}
+        size={512}
         style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-        value={event}
+        value={`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/event?event_id=${event_id}`}
         viewBox={`0 0 256 256`}
       />
+      <SearchCountdown secondsRemaining={currentTimerStart} />
+
+      <ul className="steps text-xl">
+        <li className={cn("step", currentRoundPhase > 0 && "step-accent")}>
+          <span className="step-icon text-4xl m-2">🕵️‍♂️</span>
+          <p className="m-2">Finding Match</p>
+        </li>
+        <li className={cn("step", currentRoundPhase > 1 && "step-accent")}>
+          <span className="step-icon text-4xl m-2">🎤</span>
+          <p className="m-2">Chatting</p>
+        </li>
+        <li className={cn("step", currentRoundPhase > 2 && "step-accent")}>
+          <span className="step-icon text-4xl m-2">🗃</span>
+          <p className="m-2">Post Match</p>
+        </li>
+      </ul>
     </div>
   );
 };
