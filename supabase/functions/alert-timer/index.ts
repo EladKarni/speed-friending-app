@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
@@ -12,8 +13,8 @@ import * as postgres from 'https://deno.land/x/postgres@v0.17.0/mod.ts'
 const databaseUrl = Deno.env.get('SUPABASE_DB_URL')!
 const pool = new postgres.Pool(databaseUrl, 3, true)
 
-const insertAlert = async (connection: any, eventId: string, alertType: string, roundId: string) => {
-    await connection.queryObject`INSERT INTO alerts (event_id, alert_type, related_data_id) VALUES (${eventId}, ${alertType}, ${roundId})`;
+const insertAlert = async (connection: any, eventId: string, alertType: string, roundId: string, timer: number) => {
+    await connection.queryObject`INSERT INTO alerts (event_id, alert_type, related_data_id, associated_data) VALUES (${eventId}, ${alertType}, ${roundId}, ${timer})`;
 }
 
 const processEventsIfNeeded = async (connection: any, eventId: string, roundId: string, timings: number[]) => {
@@ -31,25 +32,25 @@ const processEventsIfNeeded = async (connection: any, eventId: string, roundId: 
             case 'StartRound':
                 duration = timings[0];
                 if (timeDiff >= duration) {
-                    await insertAlert(connection, eventId, 'LocatingPhase', roundId);
+                    await insertAlert(connection, eventId, 'LocatingPhase', roundId, timings[0]);
                 }
                 break;
             case 'LocatingPhase':
                 duration = timings[1];
                 if (timeDiff >= duration) {
-                    await insertAlert(connection, eventId, 'ChattingPhase', roundId);
+                    await insertAlert(connection, eventId, 'ChattingPhase', roundId, timings[1]);
                 }
                 break;
             case 'ChattingPhase':
                 duration = timings[2];
                 if (timeDiff >= duration) {
-                    await insertAlert(connection, eventId, 'PostMatchPhase', roundId);
+                    await insertAlert(connection, eventId, 'PostMatchPhase', roundId, timings[2]);
                 }
                 break;
             case 'PostMatchPhase':
                 duration = timings[3];
                 if (timeDiff >= duration) {
-                    await insertAlert(connection, eventId, 'RoundEnded', roundId);
+                    await insertAlert(connection, eventId, 'RoundEnded', roundId, timings[3]);
                     await connection.queryObject`UPDATE event_rounds SET round_ended_at = NOW() WHERE id = ${roundId}`;
                 }
                 // update the round information with the final date so we don't keep pulling this one

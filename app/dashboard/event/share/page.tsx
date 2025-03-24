@@ -10,18 +10,54 @@ import { createClient } from "@/utils/supabase/client";
 const SharePage = () => {
   const searchParams = useSearchParams();
   const event_id = searchParams.get("event_id");
-  const [currentRoundPhase, setCurrentRoundPhase] = useState<0 | 1 | 2 | 3>(2);
-  const [currentTimerStart, setCurrentTimerStart] = useState(75);
-  const eventStatus = useEventStore((state) => state.currentRoundStage);
+  const [currentRoundPhase, setCurrentRoundPhase] = useState<0 | 1 | 2 | 3 | 4>(
+    0
+  );
+  const [currentTimerStart, setCurrentTimerStart] = useState(0);
 
   const updateCurrentRoundPhase = (payload: any) => {
-    const { alert_type, created_at, related_data_id, event_id } = payload.new;
-    console.log(alert_type, created_at, related_data_id, event_id);
+    const {
+      alert_type,
+      created_at,
+      related_data_id,
+      event_id,
+      associated_data,
+    } = payload.new;
+    console.log(
+      alert_type,
+      created_at,
+      related_data_id,
+      event_id,
+      associated_data
+    );
 
-    // setCurrentRoundPhase(newPhase);
-    // if (newPhase === 0) {
-    //   setCurrentTimerStart(75);
-    // }
+    if (event_id !== event_id) return; // Ignore events not related to the current event
+
+    if (alert_type === "StartRound") {
+      const roundPhase = parseInt(related_data_id);
+      setCurrentRoundPhase(0); // Set to 1 for the Locating Phase
+      setCurrentTimerStart(0); // Reset timer for the next round
+    }
+    if (alert_type === "LocatingPhase") {
+      const roundPhase = parseInt(related_data_id);
+      setCurrentRoundPhase(1); // Set to 1 for the Locating Phase
+      setCurrentTimerStart(associated_data); // Reset timer for the next round
+    }
+    if (alert_type === "ChattingPhase") {
+      const roundPhase = parseInt(related_data_id);
+      setCurrentRoundPhase(2); // Set to 2 for the Chatting Phase
+      setCurrentTimerStart(associated_data); // Reset timer for the next round
+    }
+    if (alert_type === "PostMatchPhase") {
+      const roundPhase = parseInt(related_data_id);
+      setCurrentRoundPhase(3); // Set to 3 for the Post Match Phase
+      setCurrentTimerStart(associated_data); // Reset timer for the next round
+    }
+    if (alert_type === "RoundEnded") {
+      const roundPhase = parseInt(related_data_id);
+      setCurrentRoundPhase(4); // Set to 4 for the Round Ended Phase
+      setCurrentTimerStart(associated_data); // Reset timer for the next round
+    }
   };
 
   //Supabase subscription
@@ -42,7 +78,7 @@ const SharePage = () => {
   return (
     <div className="max-w-md mx-auto grid gap-4 h-full justify-between">
       <h1 className="text-2xl text-center text-slate-800 dark:text-slate-100">
-        Scan This Link To join the next Round
+        Scan This Link To Join The Next Round
       </h1>
       <QRCode
         size={512}
@@ -50,7 +86,10 @@ const SharePage = () => {
         value={`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/event?event_id=${event_id}`}
         viewBox={`0 0 256 256`}
       />
-      <SearchCountdown secondsRemaining={currentTimerStart} />
+      <SearchCountdown
+        secondsRemaining={currentTimerStart}
+        currentPhase={currentRoundPhase}
+      />
 
       <ul className="steps text-xl">
         <li className={cn("step", currentRoundPhase > 0 && "step-accent")}>
