@@ -10,10 +10,12 @@ const MatchSearchPhase = ({
   event_data,
   attendee,
   setFound,
+  notFoundLock,
 }: {
   event_data: EventType;
   attendee: User;
   setFound: (isFound: boolean) => void;
+  notFoundLock: boolean;
 }) => {
   return (
     <div>
@@ -45,12 +47,13 @@ const MatchSearchPhase = ({
             className="mt-4 flex-1"
             color="gray"
             onClick={() => setFound(false)}
+            disabled={notFoundLock}
           >
             Not Found
           </Button>
           <Button
             color="blue"
-            className="w-full"
+            className="mt-4 flex-1"
             onClick={() => setFound(true)}
           >
             Found

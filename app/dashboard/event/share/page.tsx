@@ -50,7 +50,7 @@ const SharePage = () => {
     }
     if (alert_type === "RoundEnded") {
       setCurrentRoundPhase(4); // Set to 4 for the Round Ended Phase
-      setCurrentTimerStart(associated_data); // Reset timer for the next round
+      setCurrentTimerStart(0); // Reset timer for the next round
     }
   };
 

@@ -16,20 +16,18 @@ export async function subscribeAlert(callback: (payload: any) => any) {
 
 }
 
-export async function getMostRecentAlert(eventId: string, roundId: string) {
-    const supabase = await createClient();
-    console.debug('Event Id and round Id', eventId, roundId);
-    const { data: alert, error } = await supabase
-        .from("alerts")
-        .select("*")
-        .eq("event_id", eventId)
-        .eq("related_data_id", roundId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-    if (error) {
-        console.error("Error retrieving most recent alert", error);
-    }
-    return alert;
-
+export async function getMostRecentAlert(eventId: string) {
+  const supabase = await createClient();
+  console.debug("Event Id and round Id", eventId);
+  const { data: alert, error } = await supabase
+    .from("alerts")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error("Error retrieving most recent alert", error);
+  }
+  return alert;
 }

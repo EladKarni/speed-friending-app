@@ -1,15 +1,15 @@
 "use client";
 
-import { fetchEventData, modifyAttendeeReadyForNextRound } from "@/app/actions";
-import ConfirmPrompt from "@/components/ui/confirmPrompt";
+import { fetchEventData } from "@/app/actions";
 import { useUserStore } from "@/utils/store/useUserStore";
 import { EventRoundPhase, EventType } from "@/utils/supabase/schema";
-import { Card, Avatar } from "flowbite-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import MatchSearch from "@/components/matchStages/matchSearch";
 import WaitingRoomPhase from "@/components/matchStages/waitingRoom";
+import MatchPage from "@/components/matchStages/matchChat";
+import ChattingPhase from "@/components/matchStages/matchChat";
+import { getMostRecentAlert } from "@/utils/supabase/alerts";
 
 const WaitingRoom = () => {
   const attendee = useUserStore((state) => state.user_data);
@@ -19,6 +19,8 @@ const WaitingRoom = () => {
   const updateReadyStatus = useUserStore((state) => state.updateReadyStatus);
 
   const [event, setEvent] = useState<EventType>();
+  const [isNotFoundLocked, setIsNotFoundLocked] = useState<boolean>(true);
+
   const [currentRoundPhase, setCurrentRoundPhase] =
     useState<EventRoundPhase>("RoundEnded");
 
@@ -34,11 +36,17 @@ const WaitingRoom = () => {
       if (!attendee) {
         return;
       }
+      const lastAlert = await getMostRecentAlert(
+        attendee.user_metadata.event_id
+      );
       await getReadyStatus(attendee.id);
       const event = await fetchEventData(attendee!.user_metadata.event_id);
       console.log(event);
       if (event) {
         setEvent(event);
+      }
+      if (lastAlert) {
+        setCurrentRoundPhase(lastAlert.alert_type);
       }
     };
     setup();
@@ -49,13 +57,20 @@ const WaitingRoom = () => {
   }
 
   const handleMatchFound = (isFound: boolean) => {
-    console.log("Match found", isFound);
+    if (isFound) {
+      setCurrentRoundPhase("ChattingPhase");
+    }
+    // handle not found scenario
   };
 
   // Subscribe to changes in the round_participation & event_round_matches tables
   const listenToAlertChanges = (payload: any) => {
     const { alert_type, event_id } = payload.new;
     if (event_id !== attendee?.user_metadata.event_id) return; // Ignore events not related to the current
+    if (alert_type === "ChattingPhase") {
+      setIsNotFoundLocked(false); // Ignore ChattingPhase since it's handled when the user clicks the found
+      return;
+    }
     setCurrentRoundPhase(alert_type);
   };
 
@@ -69,6 +84,7 @@ const WaitingRoom = () => {
       listenToAlertChanges
     )
     .subscribe();
+
   if (currentRoundPhase === "StartRound") {
     return (
       <div>
@@ -84,12 +100,17 @@ const WaitingRoom = () => {
         event_data={event}
         attendee={attendee}
         setFound={handleMatchFound}
+        notFoundLock={isNotFoundLocked}
       />
     );
   }
 
   if (currentRoundPhase === "ChattingPhase") {
-    return <div>Chatting phase</div>;
+    return <ChattingPhase attendee={attendee} />;
+  }
+
+  if (currentRoundPhase === "PostMatchPhase") {
+    return <div>Post Match Phase</div>;
   }
 
   if (currentRoundPhase === "RoundEnded") {
@@ -102,10 +123,6 @@ const WaitingRoom = () => {
         updateReadyStatus={updateReadyStatus}
       />
     );
-  }
-
-  if (currentRoundPhase === "PostMatchPhase") {
-    return <div>Chatting phase</div>;
   }
 };
 

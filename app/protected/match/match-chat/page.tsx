@@ -1,4 +1,4 @@
-import MatchPage from "@/components/matchStages/match";
+import MatchPage from "@/components/matchStages/matchChat";
 
 const MatchChat = () => {
   return (

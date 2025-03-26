@@ -12,7 +12,8 @@ const SearchCountdown = ({
 
   useEffect(() => {
     setCurrentTime(new Date(secondsRemaining * 1000));
-  }, [secondsRemaining]);
+    console.log(secondsRemaining, currentPhase);
+  }, [currentPhase]);
 
   useEffect(() => {
     if (currentTime.getTime() === 0) {
@@ -49,13 +50,13 @@ const SearchCountdown = ({
         </div>
       );
     }
-  }
-  if (currentPhase === 4) {
-    return (
-      <div className="text-center text-4xl h-28 flex justify-center items-center">
-        <h1>Round is Over!</h1>
-      </div>
-    );
+    if (currentPhase === 4) {
+      return (
+        <div className="text-center text-4xl h-28 flex justify-center items-center">
+          <h1>Round is Over!</h1>
+        </div>
+      );
+    }
   }
 
   return (

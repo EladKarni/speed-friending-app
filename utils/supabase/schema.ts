@@ -31,7 +31,8 @@ export type EventRoundPhase =
   | "LocatingPhase"
   | "ChattingPhase"
   | "PostMatchPhase"
-  | "RoundEnded";
+  | "RoundEnded"
+  | "EventEnded";
 
 
 export type Json =
