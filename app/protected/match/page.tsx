@@ -11,17 +11,17 @@ const MatchSearchPage = async () => {
     } = await supabase.auth.getUser();
 
     if (!user) {
-        return redirect("/protected/match");
+      return redirect("/");
     }
 
     const { data } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", user.user_metadata.event_id)
-        .single();
+      .from("events")
+      .select("*")
+      .eq("id", user.user_metadata.event_id)
+      .single();
 
     if (!data) {
-        return redirect("/protected/match");
+      return redirect("/");
     }
 
     const { data: round_info } = await supabase
@@ -43,24 +43,23 @@ const MatchSearchPage = async () => {
     }
 
     return (
-        <section className="flex flex-col justify-between flex-1">
-            <MatchSearch event_data={data} />
-            <div>
-                <h5 className="mb-1 xl font-medium text-gray-700 dark:text-gray-400">
-                    Did you find your match?
-                </h5>
-                <div className="flex justify-between gap-4">
-                    <Button className="mt-4 flex-1" color="gray" disabled>
-                        Not Found
-                    </Button>
-                    <Link href={"/protected/match/match-chat"} className="mt-4 flex-1">
-                        <Button color="blue" className="w-full">
-                            Found
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-        </section>
+      <section className="flex flex-col justify-between flex-1">
+        <div>
+          <h5 className="mb-1 xl font-medium text-gray-700 dark:text-gray-400">
+            Did you find your match?
+          </h5>
+          <div className="flex justify-between gap-4">
+            <Button className="mt-4 flex-1" color="gray" disabled>
+              Not Found
+            </Button>
+            <Link href={"/protected/match/match-chat"} className="mt-4 flex-1">
+              <Button color="blue" className="w-full">
+                Found
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
     );
 };
 

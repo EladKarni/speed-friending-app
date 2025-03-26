@@ -89,7 +89,6 @@ const MatchPage = async () => {
   return (
     <div>
       <ProfileCard />
-      <SearchCountdown secondsRemaining={countDown} />
       <MatchInfo />
       <div className="w-full">
         <div className="mb-2 block">

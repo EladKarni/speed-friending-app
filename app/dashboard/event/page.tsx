@@ -98,7 +98,6 @@ const EventPage = () => {
         readyAttendees.includes(attendee.id)
       );
 
-      console.warn({ skippedAttendees });
       const generatedMatches = generateMatches(
         readyAttendeesInfo,
         skippedAttendees,
@@ -118,8 +117,6 @@ const EventPage = () => {
       updateSkippedAttendees(generatedMatches.noMatchList);
 
       if (roundData && generatedMatches.matchInfoArray.length > 0) {
-        console.log(generatedMatches);
-
         let { error } = await supabase.from("event_round_matches").insert(
           generatedMatches.matchInfoArray.map((match) => ({
             ...match,

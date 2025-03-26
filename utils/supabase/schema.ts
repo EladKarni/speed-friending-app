@@ -15,6 +15,24 @@ export type EventType = {
     matches: Json | Record<string, string[]>;
 };
 
+export type MatchInfoType = {
+  attendee_id: string;
+  attendee_notes: string | null;
+  created_at: string;
+  event_round_id: string;
+  id: number;
+  location: string;
+  match_info: Json;
+  willShare: boolean | null;
+};
+
+export type EventRoundPhase =
+  | "StartRound"
+  | "LocatingPhase"
+  | "ChattingPhase"
+  | "PostMatchPhase"
+  | "RoundEnded";
+
 
 export type Json =
     | string

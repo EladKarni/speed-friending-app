@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/utils/cn";
 import SearchCountdown from "@/components/ui/searchCountdown";
-import { useEventStore } from "@/utils/store/useEventStore";
 import { createClient } from "@/utils/supabase/client";
 
 const SharePage = () => {
@@ -34,27 +33,22 @@ const SharePage = () => {
     if (event_id !== event_id) return; // Ignore events not related to the current event
 
     if (alert_type === "StartRound") {
-      const roundPhase = parseInt(related_data_id);
       setCurrentRoundPhase(0); // Set to 1 for the Locating Phase
       setCurrentTimerStart(0); // Reset timer for the next round
     }
     if (alert_type === "LocatingPhase") {
-      const roundPhase = parseInt(related_data_id);
       setCurrentRoundPhase(1); // Set to 1 for the Locating Phase
       setCurrentTimerStart(associated_data); // Reset timer for the next round
     }
     if (alert_type === "ChattingPhase") {
-      const roundPhase = parseInt(related_data_id);
       setCurrentRoundPhase(2); // Set to 2 for the Chatting Phase
       setCurrentTimerStart(associated_data); // Reset timer for the next round
     }
     if (alert_type === "PostMatchPhase") {
-      const roundPhase = parseInt(related_data_id);
       setCurrentRoundPhase(3); // Set to 3 for the Post Match Phase
       setCurrentTimerStart(associated_data); // Reset timer for the next round
     }
     if (alert_type === "RoundEnded") {
-      const roundPhase = parseInt(related_data_id);
       setCurrentRoundPhase(4); // Set to 4 for the Round Ended Phase
       setCurrentTimerStart(associated_data); // Reset timer for the next round
     }

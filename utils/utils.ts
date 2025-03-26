@@ -52,7 +52,6 @@ export const generatePossibleMatches = (
           attendee.ticketAs !== potentialMatch.ticketAs
         ) {
           potentialMatches.push({ [attendee.id]: potentialMatch.id });
-          // potentialMatches.push({ [potentialMatch.id]: attendee.id });
         }
       }
     }
@@ -65,7 +64,6 @@ export const chooseOptimalMatches = (
   potentialMatchCounts: Record<string, number>,
   skippedLastRound: string[]
 ) => {
-  console.log(potentialMatches);
   // note this is a heuristic
   // I went down the rabbit hole on this we'd actually need a graph search algorithm like
   // the blossom algorithm to find the optimal solution,
@@ -80,11 +78,8 @@ export const chooseOptimalMatches = (
   let sortedIds: string[] =
     Object.keys(potentialMatchCounts).toSorted(sortMatchesByCount);
 
-  console.warn(skippedLastRound);
   let sortedPreviousSkips: string[] =
     skippedLastRound.toSorted(sortMatchesByCount);
-
-  console.warn(sortedIds, sortedPreviousSkips);
 
   const skipped: string[] = [];
   const matches: Record<string, string>[] = [];
@@ -97,7 +92,6 @@ export const chooseOptimalMatches = (
       .map((m) => (Object.keys(m).includes(uid) ? m[uid] : Object.keys(m)[0]))
       // .filter((m) => sortedIds.includes(m))
       .toSorted(sortMatchesByCount);
-    console.log(uid, maybeMatches);
     if (maybeMatches.length > 0) {
       const thisMatch = maybeMatches.pop() ?? "";
       matches.push({ [uid]: thisMatch });
@@ -148,15 +142,12 @@ export const generateMatches = (
   table_size: number,
   event_type?: string
 ) => {
-  console.log(readyAttendeesList);
   // note, set to false to do non-dating app style
   const potentialMatches = generatePossibleMatches(
     readyAttendeesList,
     previousMatches,
     event_type === "Dating" ? true : false
   );
-
-  console.log({ potentialMatches });
 
   const potentialMatchCounts =
     countPotentialMatchesPerAttendee(potentialMatches);
@@ -192,7 +183,6 @@ export const generateMatches = (
     const table = `Table A`;
     seats += 2;
     const attendeeId = Object.keys(match)[0] ?? "";
-    const attendeeId2 = Object.values(match)[0] ?? "";
 
     matchInfoArray.push({
       event_round_id: round_id,
@@ -204,11 +194,11 @@ export const generateMatches = (
     });
     matchInfoArray.push({
       event_round_id: round_id,
-      attendee_id: attendeeId2,
+      attendee_id: attendeeId,
       location: table,
-      match_info: readyAttendeesList.find(
-        ({ id }) => id === (attendeeId2 as Json)
-      ),
+      match_info: readyAttendeesList.find(({ id }) => {
+        return id === attendeeId;
+      }),
     });
 
     if (newMatchList[attendeeId]) {

@@ -8,6 +8,7 @@ export async function subscribeAlert(callback: (payload: any) => any) {
             "postgres_changes",
             { event: "INSERT", schema: "public", table: "alerts" },
             (payload) => {
+                console.log("first");
                 callback(payload.new);
             }
         )
